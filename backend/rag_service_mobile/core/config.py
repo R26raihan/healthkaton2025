@@ -14,13 +14,13 @@ load_dotenv(dotenv_path=env_path)
 SERVICE_NAME = "RAG Service Mobile"
 SERVICE_VERSION = "1.0.0"
 
-# LLM Model Configuration - OpenRouter
-LLM_PROVIDER = os.getenv("LLM_PROVIDER", "openrouter")  # openrouter, openai, anthropic, local
-# Using the same model as admin service for consistency
+# LLM Model Configuration - Gemini
+LLM_PROVIDER = os.getenv("LLM_PROVIDER", "gemini")  # gemini, openrouter, openai, anthropic, local
+# Using Gemini model for mobile service
 # Can be overridden via LLM_MODEL_MOBILE environment variable
-LLM_MODEL_NAME = os.getenv("LLM_MODEL_MOBILE", "deepseek/deepseek-r1-0528-qwen3-8b:free")  # Same as admin service
-LLM_API_KEY = os.getenv("LLM_API_KEY", "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")
-LLM_BASE_URL = os.getenv("LLM_BASE_URL", "https://openrouter.ai/api/v1")
+LLM_MODEL_NAME = os.getenv("LLM_MODEL_MOBILE", "gemini-2.0-flash")  # Gemini model - using gemini-2.0-flash (stable)
+LLM_API_KEY = os.getenv("LLM_API_KEY", "AIzaSyCYn1wsNyiEjIwDShmBznGlGbJAwpAaISc")  # Gemini API Key
+LLM_BASE_URL = os.getenv("LLM_BASE_URL", None)  # Not needed for Gemini
 LLM_SITE_URL = os.getenv("LLM_SITE_URL", "https://github.com/healthkon")
 LLM_SITE_NAME = os.getenv("LLM_SITE_NAME", "Healthkon BPJS RAG Service Mobile")
 

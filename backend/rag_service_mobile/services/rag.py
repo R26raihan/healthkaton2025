@@ -11,9 +11,6 @@ from ..core.config import (
     LLM_PROVIDER,
     LLM_MODEL_NAME,
     LLM_API_KEY,
-    LLM_BASE_URL,
-    LLM_SITE_URL,
-    LLM_SITE_NAME,
     MAX_CONTEXT_DOCUMENTS,
     SIMILARITY_THRESHOLD,
     MAX_RESPONSE_TOKENS,
@@ -665,7 +662,7 @@ Instruksi:
     
     # Step 7: Call LLM with mobile-optimized settings
     try:
-        answer = call_llm_with_openrouter_mobile(
+        answer = call_llm_with_gemini_mobile(
             query=query,
             context=context,
             system_prompt=system_prompt
@@ -701,53 +698,44 @@ Instruksi:
         "suggestions": suggestions
     }
 
-def call_llm_with_openrouter_mobile(
+def call_llm_with_gemini_mobile(
     query: str,
     context: str,
     system_prompt: str
 ) -> str:
     """
-    Call LLM using OpenRouter API - Optimized for mobile with better model and settings
+    Call LLM using Gemini API - Optimized for mobile with Gemini model
     """
     try:
-        from openai import OpenAI
+        import google.generativeai as genai
         import time
         
-        client = OpenAI(
-            base_url=LLM_BASE_URL or "https://openrouter.ai/api/v1",
-            api_key=LLM_API_KEY,
-            timeout=90.0  # Longer timeout for better models
-        )
+        # Configure Gemini API
+        genai.configure(api_key=LLM_API_KEY)
         
-        # Estimate token usage
-        context_chars = len(context)
-        query_chars = len(query)
-        prompt_chars = len(system_prompt)
-        total_chars = context_chars + query_chars + prompt_chars
-        estimated_tokens = total_chars / 4
+        # Get model name - ensure it has 'models/' prefix if not already present
+        model_name = LLM_MODEL_NAME or "gemini-2.0-flash"
+        if not model_name.startswith("models/"):
+            model_name = f"models/{model_name}"
         
-        # Limit context if too long - adjust for free tier limits
-        # Free tier typically allows ~2666 total tokens, so we need to be conservative
-        # Reserve tokens: ~500 for system prompt, ~200 for user query, ~166 for response = ~832 input max
-        # But we'll be more generous since we're using a free model
-        max_input_tokens = 4000  # Reduced for free tier - more conservative
-        if estimated_tokens > max_input_tokens:
-            max_context_chars = (max_input_tokens * 4) - query_chars - prompt_chars - 500
-            if max_context_chars > 0 and len(context) > max_context_chars:
-                context_lines = context.split("\n\n---\n\n")
-                truncated_context = []
-                chars_used = 0
-                for line in context_lines:
-                    if chars_used + len(line) < max_context_chars:
-                        truncated_context.append(line)
-                        chars_used += len(line)
-                    else:
-                        break
-                context = "\n\n---\n\n".join(truncated_context)
-                if truncated_context:
-                    context += "\n\n[Catatan: Beberapa informasi lama tidak ditampilkan untuk menghemat ruang]"
+        # Limit context if too long (Gemini has token limits)
+        # Gemini 2.0 Flash has large context window, but we'll be conservative
+        max_context_chars = 80000  # Conservative limit for context
+        if len(context) > max_context_chars:
+            context_lines = context.split("\n\n---\n\n")
+            truncated_context = []
+            chars_used = 0
+            for line in context_lines:
+                if chars_used + len(line) < max_context_chars:
+                    truncated_context.append(line)
+                    chars_used += len(line)
+                else:
+                    break
+            context = "\n\n---\n\n".join(truncated_context)
+            if truncated_context:
+                context += "\n\n[Catatan: Beberapa informasi lama tidak ditampilkan untuk menghemat ruang]"
         
-        # Build user content - make it clear and direct
+        # Build user content with context and query
         user_content = f"""Berikut adalah rekam medis pasien:
 
 {context}
@@ -765,55 +753,47 @@ Instruksi:
         max_retries = 3
         for attempt in range(max_retries):
             try:
-                completion = client.chat.completions.create(
-                    extra_headers={
-                        "HTTP-Referer": LLM_SITE_URL or "https://github.com/healthkon",
-                        "X-Title": LLM_SITE_NAME or "Healthkon BPJS RAG Service Mobile"
-                    },
-                    model=LLM_MODEL_NAME or "anthropic/claude-3.5-sonnet",
-                    messages=[
-                        {
-                            "role": "system",
-                            "content": system_prompt
-                        },
-                        {
-                            "role": "user",
-                            "content": user_content
-                        }
-                    ],
-                    temperature=TEMPERATURE,  # Higher temperature for more natural, friendly responses
-                    max_tokens=MAX_RESPONSE_TOKENS,  # Longer responses for mobile
-                    top_p=0.95,  # Higher top_p for more diverse responses
-                    frequency_penalty=0.2,  # Penalty to avoid repetition
-                    presence_penalty=0.2  # Encourage new topics
+                # Generate content with Gemini
+                # Create model with system instruction
+                model = genai.GenerativeModel(
+                    model_name=model_name,
+                    system_instruction=system_prompt
                 )
                 
-                # Get answer from completion
-                if not completion.choices or len(completion.choices) == 0:
-                    raise Exception("LLM returned no choices in response")
+                # Gemini API accepts generation_config as dict
+                generation_config = {
+                    "temperature": TEMPERATURE,
+                    "top_p": 0.95,
+                    "top_k": 40,
+                    "max_output_tokens": MAX_RESPONSE_TOKENS,
+                }
                 
-                message = completion.choices[0].message
-                if not message or not message.content:
-                    raise Exception("LLM returned empty message content")
+                response = model.generate_content(
+                    user_content,
+                    generation_config=generation_config
+                )
                 
-                answer = message.content.strip()
+                # Get answer from response
+                if not response or not response.text:
+                    raise Exception("Gemini returned empty response")
+                
+                answer = response.text.strip()
                 
                 # Remove markdown formatting from answer
                 answer = remove_markdown_formatting(answer)
                 
                 # Log answer for debugging
-                print(f"[RAG Mobile] LLM returned answer: {len(answer)} chars")
+                print(f"[RAG Mobile] Gemini returned answer: {len(answer)} chars")
                 if len(answer) < 100:
                     print(f"[RAG Mobile] Short answer preview: {answer[:200]}")
                 
-                # Validate answer - be lenient for free tier models
+                # Validate answer
                 if not answer:
-                    raise Exception("LLM returned empty answer after stripping")
+                    raise Exception("Gemini returned empty answer after stripping")
                 
-                # Accept shorter answers for free tier models (minimum 10 chars)
-                # But warn if it's suspiciously short
+                # Accept shorter answers (minimum 10 chars)
                 if len(answer) < 10:
-                    raise Exception(f"LLM returned too short answer (only {len(answer)} chars): '{answer}'")
+                    raise Exception(f"Gemini returned too short answer (only {len(answer)} chars): '{answer}'")
                 
                 # Log warning if answer is short but acceptable
                 if len(answer) < 50:
@@ -826,10 +806,10 @@ Instruksi:
                 error_full = str(e)
                 
                 # Log detailed error for debugging
-                print(f"[RAG Mobile] LLM call error (attempt {attempt + 1}/{max_retries}): {error_full}")
+                print(f"[RAG Mobile] Gemini call error (attempt {attempt + 1}/{max_retries}): {error_full}")
                 
                 # Check if we should retry
-                retryable_errors = ['timeout', 'rate limit', 'temporary', 'retry', '503', '502', '429', 'empty', 'short']
+                retryable_errors = ['timeout', 'rate limit', 'quota', 'temporary', 'retry', '503', '502', '429', 'empty', 'short', 'resource_exhausted']
                 should_retry = attempt < max_retries - 1 and any(keyword in error_msg for keyword in retryable_errors)
                 
                 # For empty/short answer errors, try with simpler prompt
@@ -839,25 +819,25 @@ Instruksi:
                     user_content = f"""Pertanyaan: {query}
 
 Konteks rekam medis:
-{context[:1000]}  # Limit context on retry
+{context[:1000]}
 
-Jawablah pertanyaan dengan ramah dan jelas dalam bahasa Indonesia."""
+Jawablah pertanyaan dengan ramah dan jelas dalam bahasa Indonesia. Gunakan PLAIN TEXT saja tanpa markdown."""
                     wait_time = 2
                     time.sleep(wait_time)
                     continue
                 elif should_retry:
                     wait_time = (attempt + 1) * 3
-                    print(f"[RAG Mobile] Retrying LLM call after {wait_time} seconds... (attempt {attempt + 1}/{max_retries})")
+                    print(f"[RAG Mobile] Retrying Gemini call after {wait_time} seconds... (attempt {attempt + 1}/{max_retries})")
                     time.sleep(wait_time)
                     continue
                 else:
                     # Re-raise with more context
-                    raise Exception(f"LLM call failed after {attempt + 1} attempts: {error_full}")
+                    raise Exception(f"Gemini call failed after {attempt + 1} attempts: {error_full}")
     
     except ImportError:
-        raise Exception("OpenAI package not installed. Install with: pip install openai")
+        raise Exception("Google Generative AI package not installed. Install with: pip install google-generativeai")
     except Exception as e:
-        raise Exception(f"Error calling OpenRouter API: {str(e)}")
+        raise Exception(f"Error calling Gemini API: {str(e)}")
 
 def generate_suggestions(query: str, relevant_docs: List[DocumentChunk], allergies_context: Optional[str]) -> List[str]:
     """Generate follow-up question suggestions based on context"""
