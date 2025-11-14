@@ -3,21 +3,32 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:apps/core/constants/app_constants.dart';
 
-/// Helper untuk menentukan base URL API berdasarkan platform
-/// Auto-detect IP address WiFi untuk device fisik
-/// Menggunakan dart:io NetworkInterface (built-in, tidak perlu package tambahan)
 class ApiHelper {
   static String? _cachedLocalIp;
   static const int _defaultPort = 8000;
-  
-  /// Get base URL berdasarkan platform dengan auto-detect IP WiFi
-  /// Sekarang menggunakan smart detection untuk find server IP di network
-  /// 
-  /// - iOS Simulator: localhost:8000
-  /// - Android Emulator: 10.0.2.2:8000 (special IP untuk emulator)
-  /// - Device Fisik: Auto-detect server IP di subnet yang sama
+  static const String? _hardcodedServerIp = '192.168.98.159';
   static Future<String> getBaseUrl() async {
     try {
+      // Jika ada hardcoded IP, gunakan langsung
+      if (_hardcodedServerIp != null && _hardcodedServerIp!.isNotEmpty) {
+        final hardcodedUrl = 'http://$_hardcodedServerIp:$_defaultPort';
+        if (kDebugMode) {
+          print('🔗 [API Helper] Using hardcoded server IP: $_hardcodedServerIp');
+        }
+        // Test connection untuk memastikan IP valid
+        final isConnected = await testConnection(hardcodedUrl, timeout: const Duration(seconds: 2));
+        if (isConnected) {
+          if (kDebugMode) {
+            print('✅ [API Helper] Hardcoded IP connection successful');
+          }
+          return hardcodedUrl;
+        } else {
+          if (kDebugMode) {
+            print('⚠️ [API Helper] Hardcoded IP connection failed, falling back to auto-detect');
+          }
+        }
+      }
+      
       if (kDebugMode) {
         print('🔍 [API Helper] Starting base URL detection...');
       }
@@ -131,6 +142,11 @@ class ApiHelper {
   /// Get base URL (synchronous version dengan cache)
   /// Gunakan ini jika sudah pernah memanggil getBaseUrl() sebelumnya
   static String getBaseUrlSync() {
+    // Jika ada hardcoded IP, gunakan langsung
+    if (_hardcodedServerIp != null && _hardcodedServerIp!.isNotEmpty) {
+      return 'http://$_hardcodedServerIp:$_defaultPort';
+    }
+    
     if (_cachedLocalIp != null && _cachedLocalIp!.isNotEmpty) {
       return 'http://$_cachedLocalIp:$_defaultPort';
     }
