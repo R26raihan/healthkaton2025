@@ -1,0 +1,19 @@
+version: "3.9"
+
+services:
+  rm-service:
+    build:
+      context: .
+    container_name: healthkaton-rm-mobile
+    restart: always
+    ports:
+      - "8003:8003"
+    environment:
+      DATABASE_URL: "mysql+pymysql://rm_user:rm_password@healthkaton-mysql:3306/medical_records_db"
+      JWT_SECRET: "your-secret-key"
+    networks:
+      - health_network
+
+networks:
+  health_network:
+    external: true
