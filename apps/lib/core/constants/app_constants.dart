@@ -7,7 +7,7 @@ class AppConstants {
   // Splash Screen
   static const int splashDuration = 3; // seconds
   
-  static const String baseUrl = 'http://192.168.98.159:8000';
+  static const String baseUrl = 'http://103.126.116.126:8000';
   static const String loginEndpoint = '/login';
   static const String registerEndpoint = '/register';
   static const String meEndpoint = '/me'; // Get current user info

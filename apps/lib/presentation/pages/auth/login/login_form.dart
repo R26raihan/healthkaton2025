@@ -114,15 +114,15 @@ class _LoginFormState extends State<LoginForm> {
                   ),
                 ],
               ),
-              const SizedBox(height: 8),
+              // const SizedBox(height: 8),
               // Demo credentials info
-              Text(
-                'Demo: admin@example.com / password123',
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: Colors.grey[600],
-                ),
-                textAlign: TextAlign.center,
-              ),
+              // Text(
+              //   // 'Demo: admin@example.com / password123',
+              //   // style: Theme.of(context).textTheme.bodySmall?.copyWith(
+              //   //   color: Colors.grey[600],
+              //   // ),
+              //   textAlign: TextAlign.center,
+              // ),
             ],
           ),
         );
