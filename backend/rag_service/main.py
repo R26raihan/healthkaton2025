@@ -2,8 +2,8 @@
 Main FastAPI application for RAG Service
 """
 from fastapi import FastAPI
-from .api.routes import rag
-from .core.config import SERVICE_NAME, SERVICE_VERSION
+from api.routes import rag
+from core.config import SERVICE_NAME, SERVICE_VERSION
 
 app = FastAPI(
     title=SERVICE_NAME,

@@ -126,9 +126,9 @@ async def get_current_active_petugas_for_rag(
         )
     return current_petugas
 
-from ...core.database import get_db
+from core.database import get_db
 from typing import Optional
-from ...schemas.rag import (
+from schemas.rag import (
     QueryRequest,
     QueryResponse,
     SearchRequest,
@@ -138,7 +138,7 @@ from ...schemas.rag import (
     ChatRequest,
     ChatResponse
 )
-from ...services.rag import (
+from services.rag import (
     search_documents,
     query_with_rag,
     embed_document

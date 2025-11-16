@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import text
 from datetime import datetime
 
-from ..core.config import (
+from core.config import (
     LLM_PROVIDER,
     LLM_MODEL_NAME,
     LLM_API_KEY,
@@ -19,7 +19,6 @@ from ..core.config import (
 # Note: Import schemas from parent
 import sys
 import os
-sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 
 # For now, define DocumentChunk locally to avoid circular import
 from pydantic import BaseModel
