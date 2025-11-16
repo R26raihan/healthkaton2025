@@ -5,13 +5,13 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 from datetime import timedelta
-from ...core.database import get_db
-from ...models.user import User
-from ...schemas.user import UserCreate, UserResponse, Token
-from ...core.dependencies import get_current_active_user
-from ...services.crud import authenticate_user, create_user, check_user_exists
-from ...services.security import create_access_token
-from ...core.config import ACCESS_TOKEN_EXPIRE_MINUTES
+from core.database import get_db
+from models.user import User
+from schemas.user import UserCreate, UserResponse, Token
+from core.dependencies import get_current_active_user
+from services.crud import authenticate_user, create_user, check_user_exists
+from services.security import create_access_token
+from core.config import ACCESS_TOKEN_EXPIRE_MINUTES
 
 router = APIRouter(prefix="", tags=["Authentication"])
 

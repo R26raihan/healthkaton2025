@@ -1,0 +1,19 @@
+version: "3.9"
+
+services:
+  auth-service:
+    build:
+      context: .
+    container_name: healthkaton-auth
+    restart: always
+    ports:
+      - "9000:8000"
+    environment:
+      DATABASE_URL: "mysql+pymysql://root:Raihan26@healthkaton-mysql:3306/healthkon"
+      JWT_SECRET: "your-secret-key"
+    networks:
+      - health_network
+
+networks:
+  health_network:
+    external: true
