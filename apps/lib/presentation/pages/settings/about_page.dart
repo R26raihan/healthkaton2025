@@ -76,9 +76,7 @@ class AboutPage extends StatelessWidget {
               items: [
                 'Ringkasan Rekam Medis',
                 'Penjelasan Diagnosis AI',
-                'Insight Riwayat Medis',
                 'Q&A Personal Kesehatan',
-                'Nutrisi & Pantangan Personal',
                 'BMI & Self Monitoring',
               ],
             ),

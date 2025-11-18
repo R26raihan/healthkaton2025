@@ -6,7 +6,7 @@ import 'package:apps/core/constants/app_constants.dart';
 class ApiHelper {
   static String? _cachedLocalIp;
   static const int _defaultPort = 8000;
-  static const String? _hardcodedServerIp = '103.126.116.126';
+  static const String? _hardcodedServerIp = '192.168.1.7';
   static Future<String> getBaseUrl() async {
     try {
       // Jika ada hardcoded IP, gunakan langsung (untuk production server)
@@ -15,15 +15,7 @@ class ApiHelper {
         if (kDebugMode) {
           print('🔗 [API Helper] Using hardcoded server IP: $_hardcodedServerIp');
         }
-        // Untuk production server (public IP), langsung gunakan tanpa test connection
-        // karena test connection dengan /health/ mungkin tidak tersedia
-        if (_hardcodedServerIp!.contains('103.126.116.126')) {
-          if (kDebugMode) {
-            print('✅ [API Helper] Production server detected, using directly');
-          }
-          return hardcodedUrl;
-        }
-        // Untuk local IP, tetap test connection
+        // Test connection untuk memastikan IP valid
         final isConnected = await testConnection(hardcodedUrl, timeout: const Duration(seconds: 2));
         if (isConnected) {
           if (kDebugMode) {

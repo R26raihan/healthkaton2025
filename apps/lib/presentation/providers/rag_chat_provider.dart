@@ -39,30 +39,9 @@ class RagChatProvider extends ChangeNotifier {
     notifyListeners();
   }
   
-  /// Get greeting message berdasarkan context halaman
+  /// Get greeting message
   String getGreetingMessage() {
-    switch (_currentPageContext) {
-      case 'dashboard':
-        return 'Hai! 👋 Aku bisa bantu jelaskan tentang kesehatan kamu. Ada yang ingin kamu tanyakan?';
-      case 'medical-summary':
-        return 'Hai! 👋 Aku bisa bantu jelaskan tentang rekam medis kamu. Ada yang ingin kamu tanyakan?';
-      case 'profile':
-        return 'Hai! 👋 Aku bisa bantu jelaskan tentang profil kesehatan kamu. Ada yang ingin kamu tanyakan?';
-      case 'medication-explanation':
-        return 'Hai! 👋 Aku bisa bantu jelaskan tentang obat-obatan kamu. Ada yang ingin kamu tanyakan?';
-      case 'medical-insight':
-        return 'Hai! 👋 Aku bisa bantu berikan insight tentang kesehatan kamu. Ada yang ingin kamu tanyakan?';
-      case 'health-qa':
-        return 'Hai! 👋 Aku bisa jawab pertanyaan kesehatan kamu. Ada yang ingin kamu tanyakan?';
-      case 'drug-interaction':
-        return 'Hai! 👋 Aku bisa bantu jelaskan tentang interaksi obat. Ada yang ingin kamu tanyakan?';
-      case 'doctor-questions':
-        return 'Hai! 👋 Aku bisa bantu siapkan pertanyaan untuk dokter. Ada yang ingin kamu tanyakan?';
-      case 'bmi-monitoring':
-        return 'Hai! 👋 Aku bisa bantu jelaskan tentang BMI dan kesehatan kamu. Ada yang ingin kamu tanyakan?';
-      default:
-        return 'Hai! 👋 Aku bisa bantu jelaskan tentang kesehatan kamu. Ada yang ingin kamu tanyakan?';
-    }
+    return 'Hai! 👋 Aku bisa bantu jelaskan tentang kesehatan kamu. Ada yang ingin kamu tanyakan?';
   }
   
   /// Open chat

@@ -16,6 +16,7 @@ import 'package:apps/presentation/providers/dashboard_provider.dart';
 import 'package:apps/presentation/providers/news_provider.dart';
 import 'package:apps/presentation/providers/activity_provider.dart';
 import 'package:apps/presentation/providers/medical_record_provider.dart';
+import 'package:apps/presentation/providers/allergy_provider.dart';
 import 'package:apps/presentation/routes/app_router.dart';
 import 'package:apps/domain/usecases/news/get_health_news_usecase.dart';
 import 'package:apps/data/datasources/remote/news_remote_datasource.dart';
@@ -24,6 +25,9 @@ import 'package:apps/domain/usecases/medical_record/get_medical_records_usecase.
 import 'package:apps/domain/usecases/medical_record/get_medical_record_by_id_usecase.dart';
 import 'package:apps/data/datasources/remote/medical_record_remote_datasource.dart';
 import 'package:apps/data/repositories/medical_record_repository_impl.dart';
+import 'package:apps/data/datasources/remote/allergy_remote_datasource.dart';
+import 'package:apps/data/repositories/allergy_repository_impl.dart';
+import 'package:apps/domain/usecases/allergy/get_allergies_usecase.dart';
 import 'package:apps/domain/usecases/rag_chat/chat_usecase.dart';
 import 'package:apps/data/datasources/remote/rag_chat_remote_datasource.dart';
 import 'package:apps/data/repositories/rag_chat_repository_impl.dart';
@@ -127,6 +131,15 @@ class MyApp extends StatelessWidget {
               GetMedicalRecordsUsecase(repository),
               GetMedicalRecordByIdUsecase(repository),
             )..loadMedicalRecords();
+          },
+        ),
+        // Allergy Provider
+        ChangeNotifierProvider(
+          create: (_) {
+            final repository = AllergyRepositoryImpl(
+              remoteDataSource: AllergyRemoteDataSourceImpl(),
+            );
+            return AllergyProvider(GetAllergiesUsecase(repository));
           },
         ),
         // RAG Chat Provider

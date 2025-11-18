@@ -154,28 +154,6 @@ class HealthCalculatorMenuPage extends StatelessWidget {
             ),
             const SizedBox(height: 24),
             
-            // Nutrisi & Gizi
-            _buildSectionTitle(context, '🍎 Nutrisi & Gizi'),
-            const SizedBox(height: 12),
-            _buildCalculatorGrid(
-              context,
-              [
-                _CalculatorItem(
-                  title: 'Daily Calories',
-                  icon: Bootstrap.cup_hot,
-                  color: Colors.brown,
-                  route: '/calculator/daily-calories',
-                ),
-                _CalculatorItem(
-                  title: 'Macronutrients',
-                  icon: Bootstrap.egg_fried,
-                  color: Colors.green,
-                  route: '/calculator/macronutrients',
-                ),
-              ],
-            ),
-            const SizedBox(height: 24),
-            
             // Kebugaran & Latihan
             _buildSectionTitle(context, '🏋️ Kebugaran & Latihan'),
             const SizedBox(height: 12),

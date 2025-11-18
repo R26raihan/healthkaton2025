@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
+import 'package:video_player/video_player.dart';
 import 'package:apps/presentation/providers/rag_chat_provider.dart';
 import 'package:apps/core/services/tts_service.dart';
 
@@ -24,6 +25,8 @@ class _RagChatbotWidgetState extends State<RagChatbotWidget>
   late Animation<double> _scaleAnimation;
   bool _hasAnimated = false;
   bool _hasSpoken = false;
+  VideoPlayerController? _videoController;
+  bool _isVideoInitialized = false;
   
   @override
   void initState() {
@@ -49,12 +52,45 @@ class _RagChatbotWidgetState extends State<RagChatbotWidget>
     // Initialize TTS
     TtsService.initialize();
     
+    // Initialize video player
+    _initializeVideo();
+    
     _showGreetingIfNeeded();
+  }
+  
+  Future<void> _initializeVideo() async {
+    try {
+      _videoController = VideoPlayerController.asset(
+        'assets/images/dreamina-2025-11-18-1624-The AI assistant character has a gentle,....mp4',
+      );
+      
+      await _videoController!.initialize();
+      
+      // Set video to loop
+      _videoController!.setLooping(true);
+      
+      // Play video
+      _videoController!.play();
+      
+      if (mounted) {
+        setState(() {
+          _isVideoInitialized = true;
+        });
+      }
+    } catch (e) {
+      debugPrint('Error initializing video: $e');
+      if (mounted) {
+        setState(() {
+          _isVideoInitialized = false;
+        });
+      }
+    }
   }
   
   @override
   void dispose() {
     _animationController.dispose();
+    _videoController?.dispose();
     super.dispose();
   }
   
@@ -203,7 +239,14 @@ class _RagChatbotWidgetState extends State<RagChatbotWidget>
                 },
                 backgroundColor: Colors.blue,
                 elevation: _animationController.isAnimating ? 8 : 4,
-                child: const Icon(Icons.smart_toy, color: Colors.white),
+                child: _isVideoInitialized && _videoController != null
+                    ? ClipOval(
+                        child: AspectRatio(
+                          aspectRatio: _videoController!.value.aspectRatio,
+                          child: VideoPlayer(_videoController!),
+                        ),
+                      )
+                    : const Icon(Icons.smart_toy, color: Colors.white),
               ),
             );
           },
@@ -231,9 +274,16 @@ class _GreetingCardDialog extends StatefulWidget {
 }
 
 class _GreetingCardDialogState extends State<_GreetingCardDialog> {
+  VideoPlayerController? _videoController;
+  bool _isVideoInitialized = false;
+  
   @override
   void initState() {
     super.initState();
+    
+    // Initialize video player
+    _initializeVideo();
+    
     // TTS-kan text greeting setelah dialog muncul (text dari dialog)
     WidgetsBinding.instance.addPostFrameCallback((_) {
       Future.delayed(const Duration(milliseconds: 500), () {
@@ -245,10 +295,40 @@ class _GreetingCardDialogState extends State<_GreetingCardDialog> {
     });
   }
   
+  Future<void> _initializeVideo() async {
+    try {
+      _videoController = VideoPlayerController.asset(
+        'assets/images/dreamina-2025-11-18-1624-The AI assistant character has a gentle,....mp4',
+      );
+      
+      await _videoController!.initialize();
+      
+      // Set video to loop
+      _videoController!.setLooping(true);
+      
+      // Play video
+      _videoController!.play();
+      
+      if (mounted) {
+        setState(() {
+          _isVideoInitialized = true;
+        });
+      }
+    } catch (e) {
+      debugPrint('Error initializing video in greeting dialog: $e');
+      if (mounted) {
+        setState(() {
+          _isVideoInitialized = false;
+        });
+      }
+    }
+  }
+  
   @override
   void dispose() {
     // Stop TTS saat dialog di-dispose
     TtsService.stop();
+    _videoController?.dispose();
     super.dispose();
   }
   
@@ -263,19 +343,31 @@ class _GreetingCardDialogState extends State<_GreetingCardDialog> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            // Robot Icon
+            // AI Assistant Video
             Container(
               width: 80,
               height: 80,
               decoration: BoxDecoration(
                 color: Colors.blue.withOpacity(0.1),
                 shape: BoxShape.circle,
+                border: Border.all(
+                  color: Colors.blue.withOpacity(0.3),
+                  width: 1,
+                ),
               ),
-              child: const Icon(
-                Icons.smart_toy,
-                size: 50,
-                color: Colors.blue,
-              ),
+              clipBehavior: Clip.antiAlias,
+              child: _isVideoInitialized && _videoController != null
+                  ? ClipOval(
+                      child: AspectRatio(
+                        aspectRatio: _videoController!.value.aspectRatio,
+                        child: VideoPlayer(_videoController!),
+                      ),
+                    )
+                  : const Icon(
+                      Icons.smart_toy,
+                      size: 50,
+                      color: Colors.blue,
+                    ),
             ),
             const SizedBox(height: 16),
             // Greeting Message (text yang akan di-TTS-kan)
@@ -337,11 +429,49 @@ class _ChatDialog extends StatefulWidget {
 class _ChatDialogState extends State<_ChatDialog> {
   final TextEditingController _messageController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
+  VideoPlayerController? _videoController;
+  bool _isVideoInitialized = false;
+  
+  @override
+  void initState() {
+    super.initState();
+    _initializeVideo();
+  }
+  
+  Future<void> _initializeVideo() async {
+    try {
+      _videoController = VideoPlayerController.asset(
+        'assets/images/dreamina-2025-11-18-1624-The AI assistant character has a gentle,....mp4',
+      );
+      
+      await _videoController!.initialize();
+      
+      // Set video to loop
+      _videoController!.setLooping(true);
+      
+      // Play video
+      _videoController!.play();
+      
+      if (mounted) {
+        setState(() {
+          _isVideoInitialized = true;
+        });
+      }
+    } catch (e) {
+      debugPrint('Error initializing video in chat dialog: $e');
+      if (mounted) {
+        setState(() {
+          _isVideoInitialized = false;
+        });
+      }
+    }
+  }
   
   @override
   void dispose() {
     _messageController.dispose();
     _scrollController.dispose();
+    _videoController?.dispose();
     super.dispose();
   }
   
@@ -380,12 +510,24 @@ class _ChatDialogState extends State<_ChatDialog> {
                   decoration: BoxDecoration(
                     color: Colors.white.withOpacity(0.2),
                     shape: BoxShape.circle,
+                    border: Border.all(
+                      color: Colors.white.withOpacity(0.3),
+                      width: 1,
+                    ),
                   ),
-                  child: const Icon(
-                    Icons.smart_toy,
-                    color: Colors.white,
-                    size: 24,
-                  ),
+                  clipBehavior: Clip.antiAlias,
+                  child: _isVideoInitialized && _videoController != null
+                      ? ClipOval(
+                          child: AspectRatio(
+                            aspectRatio: _videoController!.value.aspectRatio,
+                            child: VideoPlayer(_videoController!),
+                          ),
+                        )
+                      : const Icon(
+                          Icons.smart_toy,
+                          color: Colors.white,
+                          size: 24,
+                        ),
                 ),
                 const SizedBox(width: 12),
                 const Expanded(
@@ -553,12 +695,24 @@ class _ChatDialogState extends State<_ChatDialog> {
               decoration: BoxDecoration(
                 color: Colors.blue.withOpacity(0.1),
                 shape: BoxShape.circle,
+                border: Border.all(
+                  color: Colors.blue.withOpacity(0.3),
+                  width: 1,
+                ),
               ),
-              child: const Icon(
-                Icons.smart_toy,
-                size: 20,
-                color: Colors.blue,
-              ),
+              clipBehavior: Clip.antiAlias,
+              child: _isVideoInitialized && _videoController != null
+                  ? ClipOval(
+                      child: AspectRatio(
+                        aspectRatio: _videoController!.value.aspectRatio,
+                        child: VideoPlayer(_videoController!),
+                      ),
+                    )
+                  : const Icon(
+                      Icons.smart_toy,
+                      size: 20,
+                      color: Colors.blue,
+                    ),
             ),
             const SizedBox(width: 8),
           ],

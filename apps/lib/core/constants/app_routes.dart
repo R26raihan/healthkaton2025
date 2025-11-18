@@ -9,11 +9,9 @@ class AppRoutes {
   // Menu Layanan Routes
   static const String medicalSummary = '/medical-summary';
   static const String medicationExplanation = '/medication-explanation';
-  static const String medicalInsight = '/medical-insight';
+  static const String allergies = '/allergies';
   static const String healthQA = '/health-qa';
-  static const String nutritionDiet = '/nutrition-diet';
   static const String drugInteraction = '/drug-interaction';
-  static const String doctorQuestions = '/doctor-questions';
   static const String healthTrends = '/health-trends';
   static const String bmiMonitoring = '/bmi-monitoring';
   static const String healthCalculator = '/health-calculator';

@@ -34,11 +34,16 @@ class DashboardMenu extends StatelessWidget {
         },
       ),
       _MenuItem(
-        title: 'Insight Riwayat Medis',
-        icon: Bootstrap.graph_up_arrow,
-        color: AppTheme.primaryPurple,
+        title: 'Daftar Alergi',
+        icon: Bootstrap.exclamation_triangle,
+        color: Colors.orange,
         onTap: () {
-          Navigator.of(context).pushNamed(AppRoutes.medicalInsight);
+          Provider.of<ActivityProvider>(context, listen: false).logActivity(
+            title: 'Melihat Daftar Alergi',
+            description: 'Anda membuka halaman Daftar Alergi',
+            iconName: 'exclamation_triangle',
+          );
+          Navigator.of(context).pushNamed(AppRoutes.allergies);
         },
       ),
       _MenuItem(
@@ -47,14 +52,6 @@ class DashboardMenu extends StatelessWidget {
         color: AppTheme.primaryGreen,
         onTap: () {
           Navigator.of(context).pushNamed(AppRoutes.healthQA);
-        },
-      ),
-      _MenuItem(
-        title: 'Nutrisi & Pantangan',
-        icon: Bootstrap.egg_fried,
-        color: AppTheme.buttonGreen,
-        onTap: () {
-          Navigator.of(context).pushNamed(AppRoutes.nutritionDiet);
         },
       ),
       _MenuItem(
@@ -68,14 +65,6 @@ class DashboardMenu extends StatelessWidget {
             iconName: 'shield_check',
           );
           Navigator.of(context).pushNamed(AppRoutes.drugInteraction);
-        },
-      ),
-      _MenuItem(
-        title: 'Pertanyaan untuk Dokter',
-        icon: Bootstrap.question_circle,
-        color: AppTheme.accentYellow,
-        onTap: () {
-          Navigator.of(context).pushNamed(AppRoutes.doctorQuestions);
         },
       ),
       _MenuItem(

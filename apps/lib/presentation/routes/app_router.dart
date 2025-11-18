@@ -8,11 +8,9 @@ import 'package:apps/presentation/pages/news/news_detail_page.dart';
 import 'package:apps/presentation/pages/profile/profile_page.dart';
 import 'package:apps/presentation/pages/medical/medical_summary_page.dart';
 import 'package:apps/presentation/pages/medical/medication_explanation_page.dart';
-import 'package:apps/presentation/pages/medical/medical_insight_page.dart';
 import 'package:apps/presentation/pages/medical/health_qa_page.dart';
-import 'package:apps/presentation/pages/nutrition/nutrition_diet_page.dart';
+import 'package:apps/presentation/pages/medical/allergies_page.dart';
 import 'package:apps/presentation/pages/medical/drug_interaction_page.dart';
-import 'package:apps/presentation/pages/medical/doctor_questions_page.dart';
 import 'package:apps/presentation/pages/health/health_trends_page.dart';
 import 'package:apps/presentation/pages/health/bmi_monitoring_page.dart';
 import 'package:apps/presentation/pages/health/health_calculator_menu_page.dart';
@@ -90,9 +88,9 @@ class AppRouter {
           builder: (_) => const MedicationExplanationPage(),
         );
       
-      case AppRoutes.medicalInsight:
+      case AppRoutes.allergies:
         return MaterialPageRoute(
-          builder: (_) => const MedicalInsightPage(),
+          builder: (_) => const AllergiesPage(),
         );
       
       case AppRoutes.healthQA:
@@ -100,19 +98,9 @@ class AppRouter {
           builder: (_) => const HealthQAPage(),
         );
       
-      case AppRoutes.nutritionDiet:
-        return MaterialPageRoute(
-          builder: (_) => const NutritionDietPage(),
-        );
-      
       case AppRoutes.drugInteraction:
         return MaterialPageRoute(
           builder: (_) => const DrugInteractionPage(),
-        );
-      
-      case AppRoutes.doctorQuestions:
-        return MaterialPageRoute(
-          builder: (_) => const DoctorQuestionsPage(),
         );
       
       case AppRoutes.healthTrends:
