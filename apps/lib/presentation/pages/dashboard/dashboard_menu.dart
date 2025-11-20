@@ -7,12 +7,18 @@ import 'package:apps/presentation/providers/activity_provider.dart';
 
 /// Dashboard Menu - Menu items untuk layanan BPJS
 class DashboardMenu extends StatelessWidget {
-  const DashboardMenu({super.key});
+  final List<GlobalKey>? menuKeys;
+  
+  const DashboardMenu({
+    super.key,
+    this.menuKeys,
+  });
   
   @override
   Widget build(BuildContext context) {
     final menuItems = [
       _MenuItem(
+        itemKey: menuKeys != null && menuKeys!.isNotEmpty ? menuKeys![0] : null,
         title: 'Ringkasan Rekam Medis',
         icon: Bootstrap.file_medical,
         color: AppTheme.primaryGreen,
@@ -26,6 +32,7 @@ class DashboardMenu extends StatelessWidget {
         },
       ),
       _MenuItem(
+        itemKey: menuKeys != null && menuKeys!.length > 1 ? menuKeys![1] : null,
         title: 'Penjelasan Obat',
         icon: Bootstrap.capsule,
         color: AppTheme.accentYellow,
@@ -34,6 +41,7 @@ class DashboardMenu extends StatelessWidget {
         },
       ),
       _MenuItem(
+        itemKey: menuKeys != null && menuKeys!.length > 2 ? menuKeys![2] : null,
         title: 'Daftar Alergi',
         icon: Bootstrap.exclamation_triangle,
         color: Colors.orange,
@@ -47,6 +55,7 @@ class DashboardMenu extends StatelessWidget {
         },
       ),
       _MenuItem(
+        itemKey: menuKeys != null && menuKeys!.length > 3 ? menuKeys![3] : null,
         title: 'Q&A Personal Kesehatan',
         icon: Bootstrap.chat_dots,
         color: AppTheme.primaryGreen,
@@ -55,6 +64,7 @@ class DashboardMenu extends StatelessWidget {
         },
       ),
       _MenuItem(
+        itemKey: menuKeys != null && menuKeys!.length > 4 ? menuKeys![4] : null,
         title: 'Cek Interaksi Obat',
         icon: Bootstrap.shield_check,
         color: AppTheme.errorColor,
@@ -68,6 +78,7 @@ class DashboardMenu extends StatelessWidget {
         },
       ),
       _MenuItem(
+        itemKey: menuKeys != null && menuKeys!.length > 5 ? menuKeys![5] : null,
         title: 'Tren Grafik Kesehatan',
         icon: Bootstrap.bar_chart,
         color: AppTheme.primaryPurple,
@@ -76,6 +87,7 @@ class DashboardMenu extends StatelessWidget {
         },
       ),
       _MenuItem(
+        itemKey: menuKeys != null && menuKeys!.length > 6 ? menuKeys![6] : null,
         title: 'Kalkulator Kesehatan',
         icon: Bootstrap.calculator,
         color: AppTheme.buttonGreen,
@@ -89,6 +101,7 @@ class DashboardMenu extends StatelessWidget {
         },
       ),
       _MenuItem(
+        itemKey: menuKeys != null && menuKeys!.length > 7 ? menuKeys![7] : null,
         title: 'BMI & Monitoring',
         icon: Bootstrap.speedometer2,
         color: AppTheme.buttonGreen,
@@ -120,12 +133,14 @@ class DashboardMenu extends StatelessWidget {
 }
 
 class _MenuItem extends StatelessWidget {
+  final GlobalKey? itemKey;
   final String title;
   final IconData icon;
   final Color color;
   final VoidCallback onTap;
   
   const _MenuItem({
+    this.itemKey,
     required this.title,
     required this.icon,
     required this.color,
@@ -135,6 +150,7 @@ class _MenuItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
+      key: itemKey,
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(14),

@@ -4,9 +4,9 @@ import 'package:intl/intl.dart';
 import 'package:video_player/video_player.dart';
 import 'package:apps/presentation/providers/rag_chat_provider.dart';
 import 'package:apps/core/services/tts_service.dart';
+import 'package:apps/core/theme/app_theme.dart';
 
-/// Floating Chatbot Widget yang muncul di semua halaman
-/// Widget ini akan menampilkan greeting card otomatis saat halaman dibuka
+
 class RagChatbotWidget extends StatefulWidget {
   final String? pageContext; // Context halaman untuk greeting message
   
@@ -61,8 +61,19 @@ class _RagChatbotWidgetState extends State<RagChatbotWidget>
   Future<void> _initializeVideo() async {
     try {
       _videoController = VideoPlayerController.asset(
-        'assets/images/dreamina-2025-11-18-1624-The AI assistant character has a gentle,....mp4',
+        'assets/images/video_rag1.mp4',
       );
+      
+      // Add listener untuk update state saat video siap
+      _videoController!.addListener(() {
+        if (_videoController!.value.isInitialized && mounted) {
+          if (!_isVideoInitialized) {
+            setState(() {
+              _isVideoInitialized = true;
+            });
+          }
+        }
+      });
       
       await _videoController!.initialize();
       
@@ -70,15 +81,18 @@ class _RagChatbotWidgetState extends State<RagChatbotWidget>
       _videoController!.setLooping(true);
       
       // Play video
-      _videoController!.play();
+      await _videoController!.play();
       
       if (mounted) {
         setState(() {
-          _isVideoInitialized = true;
+          _isVideoInitialized = _videoController!.value.isInitialized;
         });
       }
-    } catch (e) {
-      debugPrint('Error initializing video: $e');
+      
+      debugPrint('✅ Video initialized: ${_videoController!.value.isInitialized}, duration: ${_videoController!.value.duration}');
+    } catch (e, stackTrace) {
+      debugPrint('❌ Error initializing video: $e');
+      debugPrint('Stack trace: $stackTrace');
       if (mounted) {
         setState(() {
           _isVideoInitialized = false;
@@ -237,16 +251,39 @@ class _RagChatbotWidgetState extends State<RagChatbotWidget>
                   provider.addWelcomeMessage();
                   _showChatDialog(context);
                 },
-                backgroundColor: Colors.blue,
-                elevation: _animationController.isAnimating ? 8 : 4,
-                child: _isVideoInitialized && _videoController != null
-                    ? ClipOval(
-                        child: AspectRatio(
-                          aspectRatio: _videoController!.value.aspectRatio,
-                          child: VideoPlayer(_videoController!),
+                backgroundColor: Colors.transparent,
+                elevation: 0,
+                child: Container(
+                  decoration: BoxDecoration(
+                    gradient: AppTheme.backgroundGradient,
+                    shape: BoxShape.circle,
+                    boxShadow: [
+                      BoxShadow(
+                        color: AppTheme.primaryGreen.withOpacity(0.4),
+                        blurRadius: 12,
+                        spreadRadius: 2,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: _isVideoInitialized && 
+                         _videoController != null && 
+                         _videoController!.value.isInitialized
+                      ? ClipOval(
+                          child: AspectRatio(
+                            aspectRatio: _videoController!.value.aspectRatio,
+                            child: VideoPlayer(_videoController!),
+                          ),
+                        )
+                      : const SizedBox(
+                          width: 24,
+                          height: 24,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                          ),
                         ),
-                      )
-                    : const Icon(Icons.smart_toy, color: Colors.white),
+                ),
               ),
             );
           },
@@ -298,8 +335,19 @@ class _GreetingCardDialogState extends State<_GreetingCardDialog> {
   Future<void> _initializeVideo() async {
     try {
       _videoController = VideoPlayerController.asset(
-        'assets/images/dreamina-2025-11-18-1624-The AI assistant character has a gentle,....mp4',
+        'assets/images/video_rag1.mp4',
       );
+      
+      // Add listener untuk update state saat video siap
+      _videoController!.addListener(() {
+        if (_videoController!.value.isInitialized && mounted) {
+          if (!_isVideoInitialized) {
+            setState(() {
+              _isVideoInitialized = true;
+            });
+          }
+        }
+      });
       
       await _videoController!.initialize();
       
@@ -307,15 +355,16 @@ class _GreetingCardDialogState extends State<_GreetingCardDialog> {
       _videoController!.setLooping(true);
       
       // Play video
-      _videoController!.play();
+      await _videoController!.play();
       
       if (mounted) {
         setState(() {
-          _isVideoInitialized = true;
+          _isVideoInitialized = _videoController!.value.isInitialized;
         });
       }
-    } catch (e) {
-      debugPrint('Error initializing video in greeting dialog: $e');
+    } catch (e, stackTrace) {
+      debugPrint('❌ Error initializing video in greeting dialog: $e');
+      debugPrint('Stack trace: $stackTrace');
       if (mounted) {
         setState(() {
           _isVideoInitialized = false;
@@ -348,25 +397,37 @@ class _GreetingCardDialogState extends State<_GreetingCardDialog> {
               width: 80,
               height: 80,
               decoration: BoxDecoration(
-                color: Colors.blue.withOpacity(0.1),
+                gradient: AppTheme.backgroundGradient,
                 shape: BoxShape.circle,
                 border: Border.all(
-                  color: Colors.blue.withOpacity(0.3),
-                  width: 1,
+                  color: Colors.white.withOpacity(0.3),
+                  width: 2,
                 ),
+                boxShadow: [
+                  BoxShadow(
+                    color: AppTheme.primaryGreen.withOpacity(0.3),
+                    blurRadius: 12,
+                    spreadRadius: 2,
+                  ),
+                ],
               ),
               clipBehavior: Clip.antiAlias,
-              child: _isVideoInitialized && _videoController != null
+              child: _isVideoInitialized && 
+                     _videoController != null && 
+                     _videoController!.value.isInitialized
                   ? ClipOval(
                       child: AspectRatio(
                         aspectRatio: _videoController!.value.aspectRatio,
                         child: VideoPlayer(_videoController!),
                       ),
                     )
-                  : const Icon(
-                      Icons.smart_toy,
-                      size: 50,
-                      color: Colors.blue,
+                  : const SizedBox(
+                      width: 50,
+                      height: 50,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 3,
+                        valueColor: AlwaysStoppedAnimation<Color>(AppTheme.primaryGreen),
+                      ),
                     ),
             ),
             const SizedBox(height: 16),
@@ -403,7 +464,7 @@ class _GreetingCardDialogState extends State<_GreetingCardDialog> {
                       widget.onTap();
                     },
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.blue,
+                      backgroundColor: AppTheme.primaryGreen,
                       foregroundColor: Colors.white,
                     ),
                     child: const Text('Tanya'),
@@ -441,8 +502,19 @@ class _ChatDialogState extends State<_ChatDialog> {
   Future<void> _initializeVideo() async {
     try {
       _videoController = VideoPlayerController.asset(
-        'assets/images/dreamina-2025-11-18-1624-The AI assistant character has a gentle,....mp4',
+        'assets/images/video_rag1.mp4',
       );
+      
+      // Add listener untuk update state saat video siap
+      _videoController!.addListener(() {
+        if (_videoController!.value.isInitialized && mounted) {
+          if (!_isVideoInitialized) {
+            setState(() {
+              _isVideoInitialized = true;
+            });
+          }
+        }
+      });
       
       await _videoController!.initialize();
       
@@ -450,15 +522,16 @@ class _ChatDialogState extends State<_ChatDialog> {
       _videoController!.setLooping(true);
       
       // Play video
-      _videoController!.play();
+      await _videoController!.play();
       
       if (mounted) {
         setState(() {
-          _isVideoInitialized = true;
+          _isVideoInitialized = _videoController!.value.isInitialized;
         });
       }
-    } catch (e) {
-      debugPrint('Error initializing video in chat dialog: $e');
+    } catch (e, stackTrace) {
+      debugPrint('❌ Error initializing video in chat dialog: $e');
+      debugPrint('Stack trace: $stackTrace');
       if (mounted) {
         setState(() {
           _isVideoInitialized = false;
@@ -487,20 +560,39 @@ class _ChatDialogState extends State<_ChatDialog> {
   
   @override
   Widget build(BuildContext context) {
-    return Container(
-      height: MediaQuery.of(context).size.height * 0.85,
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      child: Column(
+    final mediaQuery = MediaQuery.of(context);
+    final screenHeight = mediaQuery.size.height;
+    final safeAreaTop = mediaQuery.padding.top;
+    final safeAreaBottom = mediaQuery.padding.bottom;
+    
+    return SafeArea(
+      top: false,
+      child: Container(
+        height: screenHeight * 0.85,
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+        child: Column(
         children: [
           // Header
           Container(
-            padding: const EdgeInsets.all(16),
+            padding: EdgeInsets.only(
+              left: 16,
+              right: 16,
+              top: 16 + safeAreaTop,
+              bottom: 16,
+            ),
             decoration: BoxDecoration(
-              color: Colors.blue,
+              gradient: AppTheme.backgroundGradient,
               borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+              boxShadow: [
+                BoxShadow(
+                  color: AppTheme.primaryGreen.withOpacity(0.2),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
+                ),
+              ],
             ),
             child: Row(
               children: [
@@ -516,17 +608,22 @@ class _ChatDialogState extends State<_ChatDialog> {
                     ),
                   ),
                   clipBehavior: Clip.antiAlias,
-                  child: _isVideoInitialized && _videoController != null
+                  child: _isVideoInitialized && 
+                         _videoController != null && 
+                         _videoController!.value.isInitialized
                       ? ClipOval(
                           child: AspectRatio(
                             aspectRatio: _videoController!.value.aspectRatio,
                             child: VideoPlayer(_videoController!),
                           ),
                         )
-                      : const Icon(
-                          Icons.smart_toy,
-                          color: Colors.white,
-                          size: 24,
+                      : const SizedBox(
+                          width: 24,
+                          height: 24,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                          ),
                         ),
                 ),
                 const SizedBox(width: 12),
@@ -620,7 +717,12 @@ class _ChatDialogState extends State<_ChatDialog> {
           ),
           // Input Area
           Container(
-            padding: const EdgeInsets.all(16),
+            padding: EdgeInsets.only(
+              left: 16,
+              right: 16,
+              top: 16,
+              bottom: 16 + safeAreaBottom,
+            ),
             decoration: BoxDecoration(
               color: Colors.grey[100],
               border: Border(
@@ -666,7 +768,7 @@ class _ChatDialogState extends State<_ChatDialog> {
                               }
                             },
                       icon: const Icon(Icons.send),
-                      color: Colors.blue,
+                      color: AppTheme.primaryGreen,
                     );
                   },
                 ),
@@ -674,6 +776,7 @@ class _ChatDialogState extends State<_ChatDialog> {
             ),
           ),
         ],
+        ),
       ),
     );
   }
@@ -693,25 +796,36 @@ class _ChatDialogState extends State<_ChatDialog> {
               width: 32,
               height: 32,
               decoration: BoxDecoration(
-                color: Colors.blue.withOpacity(0.1),
+                gradient: AppTheme.backgroundGradient,
                 shape: BoxShape.circle,
                 border: Border.all(
-                  color: Colors.blue.withOpacity(0.3),
+                  color: Colors.white.withOpacity(0.3),
                   width: 1,
                 ),
+                boxShadow: [
+                  BoxShadow(
+                    color: AppTheme.primaryGreen.withOpacity(0.2),
+                    blurRadius: 4,
+                  ),
+                ],
               ),
               clipBehavior: Clip.antiAlias,
-              child: _isVideoInitialized && _videoController != null
+              child: _isVideoInitialized && 
+                     _videoController != null && 
+                     _videoController!.value.isInitialized
                   ? ClipOval(
                       child: AspectRatio(
                         aspectRatio: _videoController!.value.aspectRatio,
                         child: VideoPlayer(_videoController!),
                       ),
                     )
-                  : const Icon(
-                      Icons.smart_toy,
-                      size: 20,
-                      color: Colors.blue,
+                  : const SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        valueColor: AlwaysStoppedAnimation<Color>(AppTheme.primaryGreen),
+                      ),
                     ),
             ),
             const SizedBox(width: 8),
@@ -720,8 +834,17 @@ class _ChatDialogState extends State<_ChatDialog> {
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               decoration: BoxDecoration(
-                color: isUser ? Colors.blue : Colors.grey[200],
+                color: isUser 
+                    ? AppTheme.primaryGreen 
+                    : Colors.grey[100],
                 borderRadius: BorderRadius.circular(16),
+                boxShadow: isUser ? [
+                  BoxShadow(
+                    color: AppTheme.primaryGreen.withOpacity(0.2),
+                    blurRadius: 4,
+                    offset: const Offset(0, 2),
+                  ),
+                ] : null,
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -753,13 +876,17 @@ class _ChatDialogState extends State<_ChatDialog> {
               width: 32,
               height: 32,
               decoration: BoxDecoration(
-                color: Colors.blue.withOpacity(0.1),
+                color: AppTheme.primaryGreen.withOpacity(0.1),
                 shape: BoxShape.circle,
+                border: Border.all(
+                  color: AppTheme.primaryGreen.withOpacity(0.3),
+                  width: 1,
+                ),
               ),
               child: const Icon(
                 Icons.person,
                 size: 20,
-                color: Colors.blue,
+                color: AppTheme.primaryGreen,
               ),
             ),
           ],
@@ -800,15 +927,24 @@ class _ChatDialogState extends State<_ChatDialog> {
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                   decoration: BoxDecoration(
-                    color: Colors.blue.withOpacity(0.1),
+                    gradient: LinearGradient(
+                      colors: [
+                        AppTheme.primaryGreen.withOpacity(0.1),
+                        AppTheme.primaryPurple.withOpacity(0.1),
+                      ],
+                    ),
                     borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: Colors.blue.withOpacity(0.3)),
+                    border: Border.all(
+                      color: AppTheme.primaryGreen.withOpacity(0.3),
+                      width: 1,
+                    ),
                   ),
                   child: Text(
                     suggestion,
                     style: const TextStyle(
                       fontSize: 12,
-                      color: Colors.blue,
+                      color: AppTheme.primaryGreen,
+                      fontWeight: FontWeight.w500,
                     ),
                   ),
                 ),

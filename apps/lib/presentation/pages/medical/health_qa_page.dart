@@ -46,8 +46,11 @@ class _HealthQAPageState extends State<HealthQAPage> {
   Future<void> _initializeVideo() async {
     try {
       _videoController = VideoPlayerController.asset(
-        'assets/images/dreamina-2025-11-18-1624-The AI assistant character has a gentle,....mp4',
+        'assets/images/video_rag1.mp4',
       );
+      
+      // Add listener untuk update state saat video siap
+      _videoController!.addListener(_videoListener);
       
       await _videoController!.initialize();
       
@@ -55,18 +58,31 @@ class _HealthQAPageState extends State<HealthQAPage> {
       _videoController!.setLooping(true);
       
       // Play video
-      _videoController!.play();
+      await _videoController!.play();
       
       if (mounted) {
         setState(() {
-          _isVideoInitialized = true;
+          _isVideoInitialized = _videoController!.value.isInitialized;
         });
       }
-    } catch (e) {
-      debugPrint('Error initializing video: $e');
+      
+      debugPrint('✅ Video initialized: ${_videoController!.value.isInitialized}, duration: ${_videoController!.value.duration}');
+    } catch (e, stackTrace) {
+      debugPrint('❌ Error initializing video: $e');
+      debugPrint('Stack trace: $stackTrace');
       if (mounted) {
         setState(() {
           _isVideoInitialized = false;
+        });
+      }
+    }
+  }
+  
+  void _videoListener() {
+    if (_videoController != null && _videoController!.value.isInitialized && mounted) {
+      if (!_isVideoInitialized) {
+        setState(() {
+          _isVideoInitialized = true;
         });
       }
     }
@@ -76,6 +92,7 @@ class _HealthQAPageState extends State<HealthQAPage> {
   void dispose() {
     _messageController.dispose();
     _scrollController.dispose();
+    _videoController?.removeListener(_videoListener);
     _videoController?.dispose();
     super.dispose();
   }
@@ -173,17 +190,22 @@ class _HealthQAPageState extends State<HealthQAPage> {
                     ),
                   ),
                   clipBehavior: Clip.antiAlias,
-                  child: _isVideoInitialized && _videoController != null
+                  child: _isVideoInitialized && 
+                         _videoController != null && 
+                         _videoController!.value.isInitialized
                       ? ClipOval(
                           child: AspectRatio(
                             aspectRatio: _videoController!.value.aspectRatio,
                             child: VideoPlayer(_videoController!),
                           ),
                         )
-                      : const Icon(
-                          Icons.health_and_safety,
-                          color: AppTheme.primaryGreen,
-                          size: 28,
+                      : const SizedBox(
+                          width: 28,
+                          height: 28,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2.5,
+                            valueColor: AlwaysStoppedAnimation<Color>(AppTheme.primaryGreen),
+                          ),
                         ),
                 ),
                 const SizedBox(width: 12),
@@ -502,17 +524,22 @@ class _HealthQAPageState extends State<HealthQAPage> {
                 ),
               ),
               clipBehavior: Clip.antiAlias,
-              child: _isVideoInitialized && _videoController != null
+              child: _isVideoInitialized && 
+                     _videoController != null && 
+                     _videoController!.value.isInitialized
                   ? ClipOval(
                       child: AspectRatio(
                         aspectRatio: _videoController!.value.aspectRatio,
                         child: VideoPlayer(_videoController!),
                       ),
                     )
-                  : const Icon(
-                      Icons.health_and_safety,
-                      size: 20,
-                      color: AppTheme.primaryGreen,
+                  : const SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        valueColor: AlwaysStoppedAnimation<Color>(AppTheme.primaryGreen),
+                      ),
                     ),
             ),
             const SizedBox(width: 8),

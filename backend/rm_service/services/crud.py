@@ -283,6 +283,39 @@ def get_record_prescriptions(db: Session, record_id: str) -> List[Prescription]:
     """Get all prescriptions for a medical record"""
     return db.query(Prescription).filter(Prescription.record_id == record_id).all()
 
+def get_patient_prescriptions(db: Session, patient_id: int) -> List[Prescription]:
+    """Get all prescriptions for a patient across all medical records"""
+    from sqlalchemy import text
+    
+    # Query prescriptions by joining with medical_records to filter by patient_id
+    query = text("""
+        SELECT p.prescription_id, p.record_id, p.drug_name, p.drug_code, 
+               p.dosage, p.frequency, p.duration_days, p.notes, p.created_at
+        FROM prescriptions p
+        INNER JOIN medical_records mr ON p.record_id = mr.record_id
+        WHERE mr.patient_id = :patient_id
+        ORDER BY p.created_at DESC
+    """)
+    
+    result = db.execute(query, {"patient_id": patient_id})
+    prescriptions = []
+    
+    for row in result:
+        prescription = Prescription(
+            prescription_id=row.prescription_id,
+            record_id=row.record_id,
+            drug_name=row.drug_name,
+            drug_code=row.drug_code,
+            dosage=row.dosage,
+            frequency=row.frequency,
+            duration_days=row.duration_days,
+            notes=row.notes,
+            created_at=row.created_at
+        )
+        prescriptions.append(prescription)
+    
+    return prescriptions
+
 def get_prescription_by_id(db: Session, prescription_id: str) -> Optional[Prescription]:
     """Get prescription by ID"""
     return db.query(Prescription).filter(Prescription.prescription_id == prescription_id).first()

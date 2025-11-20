@@ -17,6 +17,7 @@ import 'package:apps/presentation/providers/news_provider.dart';
 import 'package:apps/presentation/providers/activity_provider.dart';
 import 'package:apps/presentation/providers/medical_record_provider.dart';
 import 'package:apps/presentation/providers/allergy_provider.dart';
+import 'package:apps/presentation/providers/prescription_provider.dart';
 import 'package:apps/presentation/routes/app_router.dart';
 import 'package:apps/domain/usecases/news/get_health_news_usecase.dart';
 import 'package:apps/data/datasources/remote/news_remote_datasource.dart';
@@ -28,6 +29,9 @@ import 'package:apps/data/repositories/medical_record_repository_impl.dart';
 import 'package:apps/data/datasources/remote/allergy_remote_datasource.dart';
 import 'package:apps/data/repositories/allergy_repository_impl.dart';
 import 'package:apps/domain/usecases/allergy/get_allergies_usecase.dart';
+import 'package:apps/data/datasources/remote/prescription_remote_datasource.dart';
+import 'package:apps/data/repositories/prescription_repository_impl.dart';
+import 'package:apps/domain/usecases/prescription/get_my_medications_usecase.dart';
 import 'package:apps/domain/usecases/rag_chat/chat_usecase.dart';
 import 'package:apps/data/datasources/remote/rag_chat_remote_datasource.dart';
 import 'package:apps/data/repositories/rag_chat_repository_impl.dart';
@@ -140,6 +144,15 @@ class MyApp extends StatelessWidget {
               remoteDataSource: AllergyRemoteDataSourceImpl(),
             );
             return AllergyProvider(GetAllergiesUsecase(repository));
+          },
+        ),
+        // Prescription Provider
+        ChangeNotifierProvider(
+          create: (_) {
+            final repository = PrescriptionRepositoryImpl(
+              remoteDataSource: PrescriptionRemoteDataSourceImpl(),
+            );
+            return PrescriptionProvider(GetMyMedicationsUsecase(repository));
           },
         ),
         // RAG Chat Provider

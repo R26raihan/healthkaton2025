@@ -81,11 +81,13 @@ class AppRouter {
       case AppRoutes.medicalSummary:
         return MaterialPageRoute(
           builder: (_) => const MedicalSummaryPage(),
+          settings: settings, // Pass settings to get arguments
         );
       
       case AppRoutes.medicationExplanation:
         return MaterialPageRoute(
           builder: (_) => const MedicationExplanationPage(),
+          settings: settings, // Pass settings to get arguments
         );
       
       case AppRoutes.allergies:

@@ -19,9 +19,22 @@ from rm_service.services.crud import (
     get_prescription_by_id,
     get_record_prescriptions,
     get_medical_record,
+    get_patient_prescriptions,
 )
 
 router = APIRouter(prefix="/prescriptions", tags=["Prescriptions (Mobile)"])
+
+@router.get("/my-medications", response_model=List[PrescriptionResponse])
+async def get_my_medications_route(
+    current_user = Depends(get_current_active_user_for_rm_mobile),
+    db: Session = Depends(get_db)
+):
+    """
+    Get all medications (prescriptions) consumed by the current patient
+    **Requires user authentication** - Returns all prescriptions across all medical records for the authenticated user
+    """
+    prescriptions = get_patient_prescriptions(db, current_user.id)
+    return [PrescriptionResponse.model_validate(p) for p in prescriptions]
 
 @router.get("/record/{record_id}", response_model=List[PrescriptionResponse])
 async def get_record_prescriptions_route(

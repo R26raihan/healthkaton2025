@@ -3,7 +3,12 @@ import 'package:apps/presentation/pages/dashboard/dashboard_menu.dart';
 
 /// Dashboard Content - Konten utama dashboard
 class DashboardContent extends StatelessWidget {
-  const DashboardContent({super.key});
+  final List<GlobalKey>? menuKeys;
+  
+  const DashboardContent({
+    super.key,
+    this.menuKeys,
+  });
   
   @override
   Widget build(BuildContext context) {
@@ -19,7 +24,7 @@ class DashboardContent extends StatelessWidget {
               fontWeight: FontWeight.bold,
             ),
           ),
-          const DashboardMenu(),
+          DashboardMenu(menuKeys: menuKeys),
         ],
       ),
     );
