@@ -393,6 +393,57 @@ def get_health_metrics_context(user_id: int, db: Session, limit: int = 20) -> Op
         print(f"Error retrieving health metrics: {str(e)}")
         return None
 
+def detect_query_context(query: str) -> Dict[str, bool]:
+    """
+    Detect query context to determine which data sources are relevant
+    Returns dict with flags for: allergies, health_calc, health_metrics, medical_records
+    """
+    query_lower = query.lower()
+    
+    # Keywords untuk alergi
+    allergy_keywords = ['alergi', 'allergy', 'alergen', 'reaksi alergi', 'sensitif', 'intoleransi']
+    is_allergy_query = any(kw in query_lower for kw in allergy_keywords)
+    
+    # Keywords untuk health calculations (BMI, BMR, TDEE, dll)
+    health_calc_keywords = [
+        'bmi', 'bmr', 'tdee', 'body mass index', 'basal metabolic rate',
+        'total daily energy expenditure', 'body fat', 'body fat percentage',
+        'ideal weight', 'berat ideal', 'kalori', 'calories', 'kebutuhan kalori',
+        'macronutrients', 'makronutrien', 'protein', 'karbohidrat', 'lemak',
+        'water needs', 'kebutuhan air', 'body water', 'vo2 max', 'vo2max',
+        'heart rate', 'detak jantung', 'max heart rate', 'target heart rate',
+        'map', 'mean arterial pressure', 'body surface', 'bsa',
+        'one rep max', 'recovery time', 'metabolic age', 'waist to hip',
+        'waist to height', 'calories burned', 'perhitungan kesehatan',
+        'kalkulator kesehatan', 'hasil perhitungan'
+    ]
+    is_health_calc_query = any(kw in query_lower for kw in health_calc_keywords)
+    
+    # Keywords untuk health metrics/trends
+    health_metrics_keywords = [
+        'tren', 'trend', 'riwayat', 'history', 'perkembangan',
+        'perubahan', 'grafik', 'chart', 'diagram', 'statistik',
+        'metrik kesehatan', 'data kesehatan', 'tracking'
+    ]
+    is_health_metrics_query = any(kw in query_lower for kw in health_metrics_keywords)
+    
+    # Keywords untuk medical records (diagnosis, prescriptions, lab, dll)
+    medical_records_keywords = [
+        'diagnosis', 'diagnosa', 'obat', 'resep', 'prescription',
+        'lab', 'laboratorium', 'hasil lab', 'test', 'tes',
+        'kunjungan', 'visit', 'dokter', 'doctor', 'berobat',
+        'rekam medis', 'medical record', 'penyakit', 'sakit',
+        'gejala', 'symptom', 'treatment', 'pengobatan'
+    ]
+    is_medical_records_query = any(kw in query_lower for kw in medical_records_keywords)
+    
+    return {
+        'allergies': is_allergy_query,
+        'health_calc': is_health_calc_query,
+        'health_metrics': is_health_metrics_query,
+        'medical_records': is_medical_records_query
+    }
+
 def remove_markdown_formatting(text: str) -> str:
     """
     Remove markdown formatting and special characters from text to return plain text
@@ -527,46 +578,77 @@ def query_with_rag_mobile(
     except Exception as e:
         print(f"Error searching medical records: {str(e)}")
     
+    # Step 2.5: Detect query context to determine which data sources are relevant
+    query_context = detect_query_context(query)
+    
+    # Check if query is clearly about specific topic (not general)
+    is_specific_query = any([
+        query_context['allergies'],
+        query_context['health_calc'],
+        query_context['health_metrics'],
+        query_context['medical_records']
+    ])
+    
     # Step 3: Get patient allergies
+    # Only include if query is about allergies/medical records, or if query is general/unspecific
     allergies_context = None
-    try:
-        allergies_context = get_patient_allergies_context(patient_id, db)
-    except Exception as e:
-        print(f"Error retrieving allergies: {str(e)}")
+    if query_context['allergies'] or query_context['medical_records'] or not is_specific_query:
+        try:
+            allergies_context = get_patient_allergies_context(patient_id, db)
+        except Exception as e:
+            print(f"Error retrieving allergies: {str(e)}")
     
     # Step 3.5: Get health calculations context
+    # Only include if query is about health calculations/metrics, or if query is general/unspecific
     health_calculations_context = None
-    try:
-        health_calculations_context = get_health_calculations_context(patient_id, db, limit=10)
-    except Exception as e:
-        print(f"Error retrieving health calculations: {str(e)}")
+    if query_context['health_calc'] or query_context['health_metrics'] or not is_specific_query:
+        try:
+            health_calculations_context = get_health_calculations_context(patient_id, db, limit=10)
+        except Exception as e:
+            print(f"Error retrieving health calculations: {str(e)}")
     
     # Step 3.6: Get health metrics context
+    # Only include if query is about health metrics/calculations, or if query is general/unspecific
     health_metrics_context = None
-    try:
-        health_metrics_context = get_health_metrics_context(patient_id, db, limit=20)
-    except Exception as e:
-        print(f"Error retrieving health metrics: {str(e)}")
+    if query_context['health_metrics'] or query_context['health_calc'] or not is_specific_query:
+        try:
+            health_metrics_context = get_health_metrics_context(patient_id, db, limit=20)
+        except Exception as e:
+            print(f"Error retrieving health metrics: {str(e)}")
     
     # Step 4: Sort and limit documents
     relevant_docs.sort(key=lambda x: x.similarity_score, reverse=True)
     relevant_docs = relevant_docs[:max_documents]
     
     # Step 5: Build structured context
+    # For specific queries, only include relevant data
+    # For general queries, include all data but with clear instructions
     context_parts = []
     sources = []
     
+    # Add allergies only if:
+    # - Query is about allergies/medical records, OR
+    # - Query is general/unspecific (so we include all data)
     if allergies_context:
-        context_parts.append(allergies_context)
-        sources.append("patient_allergies")
+        if query_context['allergies'] or query_context['medical_records'] or not is_specific_query:
+            context_parts.append(allergies_context)
+            sources.append("patient_allergies")
     
+    # Add health calculations only if:
+    # - Query is about health calculations/metrics, OR
+    # - Query is general/unspecific
     if health_calculations_context:
-        context_parts.append(health_calculations_context)
-        sources.append("health_calculations")
+        if query_context['health_calc'] or query_context['health_metrics'] or not is_specific_query:
+            context_parts.append(health_calculations_context)
+            sources.append("health_calculations")
     
+    # Add health metrics only if:
+    # - Query is about health metrics/calculations, OR
+    # - Query is general/unspecific
     if health_metrics_context:
-        context_parts.append(health_metrics_context)
-        sources.append("health_metrics")
+        if query_context['health_metrics'] or query_context['health_calc'] or not is_specific_query:
+            context_parts.append(health_metrics_context)
+            sources.append("health_metrics")
     
     for doc in relevant_docs:
         metadata_info = ""
@@ -584,7 +666,7 @@ def query_with_rag_mobile(
     if not context_parts:
         return {
             "query": query,
-            "answer": "Halo! 😊 Saya tidak menemukan informasi rekam medis atau data kesehatan yang relevan untuk menjawab pertanyaan Anda saat ini. "
+            "answer": "Halo! Saya Nova 😊 Saya tidak menemukan informasi rekam medis atau data kesehatan yang relevan untuk menjawab pertanyaan Anda saat ini. "
                      "Ini bisa terjadi karena: Belum ada dokumen medis yang diunggah. Belum ada riwayat kunjungan medis. "
                      "Belum ada data perhitungan kesehatan (BMI, BMR, TDEE, dll). Pertanyaan Anda memerlukan informasi yang belum tersedia. "
                      "Silakan coba dengan pertanyaan lain atau pastikan Anda telah: Mengunggah dokumen medis. Memiliki riwayat kunjungan medis. "
@@ -606,24 +688,27 @@ def query_with_rag_mobile(
     
     # Step 6: Build friendly, engaging prompt for LLM
     # Simplified and more direct prompt for better reliability with free tier models
-    system_prompt = """Anda adalah asisten kesehatan yang ramah untuk aplikasi mobile. 
+    system_prompt = """Anda adalah Nova, asisten kesehatan AI yang ramah untuk aplikasi mobile. 
 
 Tugas Anda:
 1. Bantu pasien memahami rekam medis mereka dengan bahasa Indonesia yang RAMAH dan MUDAH DIPAHAMI
-2. Berikan penjelasan yang LENGKAP dan DETAIL berdasarkan informasi rekam medis
+2. Berikan penjelasan yang LENGKAP dan DETAIL berdasarkan informasi rekam medis yang RELEVAN dengan pertanyaan
 3. Jelaskan istilah medis dengan bahasa sederhana
 4. Tunjukkan kepedulian terhadap kesehatan pasien
 
 PANDUAN JAWABAN:
-- Mulai dengan sapaan ramah (contoh: "Halo! 😊" atau "Tentu saja!")
+- Mulai dengan sapaan ramah sebagai Nova (contoh: "Halo! Saya Nova 😊" atau "Tentu saja! Saya Nova, siap membantu")
 - Gunakan bahasa Indonesia yang natural dan conversational
 - Jelaskan informasi dengan detail menggunakan poin-poin jika perlu
-- Untuk alergi: Jelaskan dan berikan saran menghindari alergen
+- SANGAT PENTING: Hanya gunakan dan sebutkan data yang RELEVAN dengan pertanyaan. JANGAN PERNAH menyebutkan data yang tidak relevan dengan pertanyaan.
+- Jika pertanyaan tentang BMI, BMR, TDEE, atau perhitungan kesehatan: Fokus HANYA pada data perhitungan kesehatan. JANGAN menyebutkan data alergi, rekam medis, atau data lain yang tidak relevan kecuali ditanya secara eksplisit.
+- Jika pertanyaan tentang alergi: Fokus HANYA pada data alergi. JANGAN menyebutkan data perhitungan kesehatan, rekam medis, atau data lain yang tidak relevan.
+- Jika pertanyaan tentang rekam medis (diagnosis, obat, lab): Fokus HANYA pada data rekam medis yang relevan. JANGAN menyebutkan data perhitungan kesehatan atau alergi jika tidak relevan.
 - Untuk obat: Sebutkan nama, dosis, frekuensi, dan tips konsumsi
 - Untuk hasil lab: Jelaskan nilai, rentang normal, dan artinya
 - Untuk diagnosis: Jelaskan dengan bahasa sederhana dan tindakan yang disarankan
-- Untuk data perhitungan kesehatan (BMI, BMR, TDEE, dll): Jelaskan nilai, artinya, dan rekomendasi
-- Untuk metrik kesehatan: Jelaskan tren, perubahan, dan saran berdasarkan data
+- Untuk data perhitungan kesehatan (BMI, BMR, TDEE, dll): Jelaskan nilai, artinya, dan rekomendasi. JANGAN menyebutkan alergi, rekam medis, atau data lain jika tidak relevan.
+- Untuk metrik kesehatan: Jelaskan tren, perubahan, dan saran berdasarkan data. JANGAN menyebutkan data lain yang tidak relevan.
 - Sebutkan tanggal kunjungan atau perhitungan jika relevan
 - Jika informasi tidak tersedia, katakan dengan sopan
 - Akhiri dengan dukungan dan saran follow-up
@@ -641,24 +726,35 @@ FORMAT RESPONSE:
 
 PENTING:
 - Berikan jawaban yang LENGKAP (minimal beberapa kalimat, idealnya 100-200 kata atau lebih)
-- Gunakan HANYA informasi dari rekam medis yang diberikan
+- Gunakan HANYA informasi dari rekam medis yang RELEVAN dengan pertanyaan
+- JANGAN PERNAH menyebutkan data yang tidak relevan dengan pertanyaan, meskipun data tersebut tersedia di context
+- Jika context berisi data alergi tetapi pertanyaan tentang BMI, JANGAN menyebutkan alergi sama sekali
+- Jika context berisi data BMI tetapi pertanyaan tentang alergi, JANGAN menyebutkan BMI sama sekali
+- Fokus pada menjawab pertanyaan dengan data yang relevan saja
 - Jangan memberikan diagnosis atau saran medis baru
 - Jelaskan istilah medis dengan bahasa sederhana
-- PASTIKAN response adalah PLAIN TEXT tanpa markdown formatting apapun"""
+- PASTIKAN response adalah PLAIN TEXT tanpa markdown formatting apapun
+- Ingat: Anda adalah Nova, asisten kesehatan AI yang ramah"""
     
-    user_prompt = f"""Berikut adalah rekam medis pasien:
+    user_prompt = f"""Berikut adalah data kesehatan pasien (beberapa data mungkin tidak relevan dengan pertanyaan):
 
 {context}
 
 Pertanyaan pasien: {query}
 
-Instruksi:
-- Jawablah pertanyaan dengan RAMAH dan MENYENANGKAN dalam bahasa Indonesia
+Instruksi sebagai Nova:
+- Jawablah pertanyaan dengan RAMAH dan MENYENANGKAN dalam bahasa Indonesia sebagai Nova
 - Berikan penjelasan yang LENGKAP dan DETAIL
 - Gunakan bahasa yang mudah dipahami
 - Gunakan PLAIN TEXT saja, JANGAN gunakan markdown (tidak boleh **bold**, ###, dll)
+- SANGAT PENTING: Hanya gunakan dan sebutkan data yang RELEVAN dengan pertanyaan. JANGAN PERNAH menyebutkan data yang tidak relevan.
+- Jika pertanyaan tentang BMI, BMR, TDEE, atau perhitungan kesehatan: Gunakan HANYA data perhitungan kesehatan. IGNORE dan JANGAN SEBUTKAN data alergi, rekam medis, atau data lain yang tidak relevan.
+- Jika pertanyaan tentang alergi: Gunakan HANYA data alergi. IGNORE dan JANGAN SEBUTKAN data perhitungan kesehatan, rekam medis, atau data lain yang tidak relevan.
+- Jika pertanyaan tentang rekam medis (diagnosis, obat, lab): Gunakan HANYA data rekam medis yang relevan. IGNORE dan JANGAN SEBUTKAN data perhitungan kesehatan atau alergi jika tidak relevan.
+- Jika pertanyaan tentang metrik kesehatan atau tren: Gunakan HANYA data metrik yang relevan. IGNORE data lain yang tidak relevan.
 - Jika informasi tersedia, jelaskan dengan jelas
-- Jika informasi tidak tersedia, katakan dengan sopan"""
+- Jika informasi tidak tersedia, katakan dengan sopan
+- Ingat: Anda adalah Nova, jadi perkenalkan diri sebagai Nova di awal jawaban"""
     
     # Step 7: Call LLM with mobile-optimized settings
     try:
@@ -671,18 +767,18 @@ Instruksi:
     except Exception as e:
         error_msg = str(e)
         if "rate limit" in error_msg.lower() or "quota" in error_msg.lower():
-            answer = "Maaf, layanan sedang sibuk. Silakan coba lagi beberapa saat lagi. 🙏"
+            answer = "Halo! Saya Nova. Maaf, layanan sedang sibuk. Silakan coba lagi beberapa saat lagi. 🙏"
             success = False
         elif "timeout" in error_msg.lower():
-            answer = "Maaf, waktu tunggu habis. Silakan coba lagi dengan pertanyaan yang lebih spesifik. ⏱️"
+            answer = "Halo! Saya Nova. Maaf, waktu tunggu habis. Silakan coba lagi dengan pertanyaan yang lebih spesifik. ⏱️"
             success = False
         elif "empty" in error_msg or "short" in error_msg:
-            answer = "Maaf, saya mengalami kesulitan menghasilkan jawaban yang lengkap untuk pertanyaan Anda. "
+            answer = "Halo! Saya Nova. Maaf, saya mengalami kesulitan menghasilkan jawaban yang lengkap untuk pertanyaan Anda. "
             answer += f"Namun, saya menemukan {len(relevant_docs)} dokumen relevan dalam rekam medis Anda. "
             answer += "Silakan coba lagi dengan pertanyaan yang lebih spesifik, atau hubungi tim kesehatan untuk informasi lebih detail. 😔"
             success = False
         else:
-            answer = f"Maaf, terjadi kesalahan saat memproses pertanyaan Anda. "
+            answer = f"Halo! Saya Nova. Maaf, terjadi kesalahan saat memproses pertanyaan Anda. "
             answer += f"Ditemukan {len(relevant_docs)} dokumen relevan, tetapi tidak dapat menghasilkan jawaban. "
             answer += "Silakan coba lagi dengan pertanyaan yang berbeda atau hubungi administrator. 😔"
             success = False
@@ -736,19 +832,25 @@ def call_llm_with_gemini_mobile(
                 context += "\n\n[Catatan: Beberapa informasi lama tidak ditampilkan untuk menghemat ruang]"
         
         # Build user content with context and query
-        user_content = f"""Berikut adalah rekam medis pasien:
+        user_content = f"""Berikut adalah data kesehatan pasien (beberapa data mungkin tidak relevan dengan pertanyaan):
 
 {context}
 
 Pertanyaan pasien: {query}
 
-Instruksi:
-- Jawablah pertanyaan dengan RAMAH dan MENYENANGKAN dalam bahasa Indonesia
+Instruksi sebagai Nova:
+- Jawablah pertanyaan dengan RAMAH dan MENYENANGKAN dalam bahasa Indonesia sebagai Nova
 - Berikan penjelasan yang LENGKAP dan DETAIL
 - Gunakan bahasa yang mudah dipahami
 - Gunakan PLAIN TEXT saja, JANGAN gunakan markdown (tidak boleh **bold**, ###, dll)
+- SANGAT PENTING: Hanya gunakan dan sebutkan data yang RELEVAN dengan pertanyaan. JANGAN PERNAH menyebutkan data yang tidak relevan.
+- Jika pertanyaan tentang BMI, BMR, TDEE, atau perhitungan kesehatan: Gunakan HANYA data perhitungan kesehatan. IGNORE dan JANGAN SEBUTKAN data alergi, rekam medis, atau data lain yang tidak relevan.
+- Jika pertanyaan tentang alergi: Gunakan HANYA data alergi. IGNORE dan JANGAN SEBUTKAN data perhitungan kesehatan, rekam medis, atau data lain yang tidak relevan.
+- Jika pertanyaan tentang rekam medis (diagnosis, obat, lab): Gunakan HANYA data rekam medis yang relevan. IGNORE dan JANGAN SEBUTKAN data perhitungan kesehatan atau alergi jika tidak relevan.
+- Jika pertanyaan tentang metrik kesehatan atau tren: Gunakan HANYA data metrik yang relevan. IGNORE data lain yang tidak relevan.
 - Jika informasi tersedia, jelaskan dengan jelas
-- Jika informasi tidak tersedia, katakan dengan sopan"""
+- Jika informasi tidak tersedia, katakan dengan sopan
+- Ingat: Anda adalah Nova, jadi perkenalkan diri sebagai Nova di awal jawaban"""
         
         max_retries = 3
         for attempt in range(max_retries):

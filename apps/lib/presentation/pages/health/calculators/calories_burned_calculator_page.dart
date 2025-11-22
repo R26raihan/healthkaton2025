@@ -74,7 +74,6 @@ class _CaloriesBurnedCalculatorPageState extends State<CaloriesBurnedCalculatorP
             backgroundColor: Colors.green,
           ),
         );
-        Navigator.of(context).pop();
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -88,199 +87,243 @@ class _CaloriesBurnedCalculatorPageState extends State<CaloriesBurnedCalculatorP
   
   @override
   Widget build(BuildContext context) {
+    final caloriesBurnedColor = Colors.orange;
+    
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Kalkulator Calories Burned'),
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(20),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Card(
-                child: Padding(
-                  padding: const EdgeInsets.all(20),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Masukkan Data',
-                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      const SizedBox(height: 20),
-                      TextFormField(
-                        controller: _weightController,
-                        keyboardType: TextInputType.number,
-                        decoration: const InputDecoration(
-                          labelText: 'Berat Badan (kg)',
-                          hintText: 'Contoh: 70',
-                          prefixIcon: Icon(Icons.monitor_weight),
-                          border: OutlineInputBorder(),
-                        ),
-                        validator: (value) {
-                          if (value == null || value.isEmpty) return 'Masukkan berat badan';
-                          final weight = double.tryParse(value);
-                          if (weight == null || weight <= 0) return 'Berat badan harus lebih dari 0';
-                          return null;
-                        },
-                      ),
-                      const SizedBox(height: 16),
-                      TextFormField(
-                        controller: _durationController,
-                        keyboardType: TextInputType.number,
-                        decoration: const InputDecoration(
-                          labelText: 'Durasi Latihan (menit)',
-                          hintText: 'Contoh: 30',
-                          prefixIcon: Icon(Icons.timer),
-                          border: OutlineInputBorder(),
-                        ),
-                        validator: (value) {
-                          if (value == null || value.isEmpty) return 'Masukkan durasi';
-                          final duration = double.tryParse(value);
-                          if (duration == null || duration <= 0) return 'Durasi harus lebih dari 0';
-                          return null;
-                        },
-                      ),
-                      const SizedBox(height: 16),
-                      TextFormField(
-                        controller: _metController,
-                        keyboardType: TextInputType.number,
-                        decoration: const InputDecoration(
-                          labelText: 'MET Value',
-                          hintText: 'Contoh: 3.5 (jalan), 8.0 (lari)',
-                          prefixIcon: Icon(Icons.speed),
-                          border: OutlineInputBorder(),
-                          helperText: 'MET (Metabolic Equivalent) - intensitas aktivitas',
-                        ),
-                        validator: (value) {
-                          if (value == null || value.isEmpty) return 'Masukkan MET value';
-                          final met = double.tryParse(value);
-                          if (met == null || met <= 0) return 'MET harus lebih dari 0';
-                          return null;
-                        },
-                      ),
-                      const SizedBox(height: 24),
-                      SizedBox(
-                        width: double.infinity,
-                        child: ElevatedButton.icon(
-                          onPressed: _isCalculating ? null : _calculate,
-                          icon: _isCalculating
-                              ? const SizedBox(
-                                  width: 20,
-                                  height: 20,
-                                  child: CircularProgressIndicator(strokeWidth: 2),
-                                )
-                              : const Icon(Icons.calculate),
-                          label: Text(_isCalculating ? 'Menghitung...' : 'Hitung Calories Burned'),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.orange,
-                            foregroundColor: Colors.white,
-                            padding: const EdgeInsets.symmetric(vertical: 16),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
+      body: CustomScrollView(
+        slivers: [
+          SliverAppBar(
+            expandedHeight: 180,
+            pinned: true,
+            flexibleSpace: FlexibleSpaceBar(
+              background: CalculatorBaseWidget.buildHeader(
+                context: context,
+                title: 'Kalkulator Calories Burned',
+                subtitle: 'Kalori yang Terbakar',
+                color: caloriesBurnedColor,
+                icon: Icons.local_fire_department,
               ),
-              
-              if (_result != null) ...[
-                const SizedBox(height: 20),
-                Card(
-                  color: Colors.orange.withOpacity(0.1),
-                  child: Padding(
-                    padding: const EdgeInsets.all(20),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+            ),
+          ),
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.all(20),
+              child: Form(
+                key: _formKey,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    CalculatorBaseWidget.buildInputCard(
+                      context: context,
+                      title: 'Masukkan Data',
+                      color: caloriesBurnedColor,
                       children: [
-                        Text(
-                          'Hasil Perhitungan',
-                          style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                            fontWeight: FontWeight.bold,
+                        TextFormField(
+                          controller: _weightController,
+                          keyboardType: TextInputType.number,
+                          decoration: InputDecoration(
+                            labelText: 'Berat Badan (kg)',
+                            hintText: 'Contoh: 70',
+                            prefixIcon: const Icon(Icons.monitor_weight),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            filled: true,
+                            fillColor: Colors.grey[50],
                           ),
+                          validator: (value) {
+                            if (value == null || value.isEmpty) return 'Masukkan berat badan';
+                            final weight = double.tryParse(value);
+                            if (weight == null || weight <= 0) return 'Berat badan harus lebih dari 0';
+                            return null;
+                          },
                         ),
-                        const SizedBox(height: 20),
-                        Center(
-                          child: Column(
-                            children: [
-                              Text(
-                                'Calories Burned',
-                                style: Theme.of(context).textTheme.bodyLarge,
-                              ),
-                              const SizedBox(height: 8),
-                              Text(
-                                '${_result!['calories_burned']} ${_result!['unit']}',
-                                style: Theme.of(context).textTheme.displayLarge?.copyWith(
-                                  color: Colors.orange,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ],
+                        const SizedBox(height: 16),
+                        TextFormField(
+                          controller: _durationController,
+                          keyboardType: TextInputType.number,
+                          decoration: InputDecoration(
+                            labelText: 'Durasi Latihan (menit)',
+                            hintText: 'Contoh: 30',
+                            prefixIcon: const Icon(Icons.timer),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            filled: true,
+                            fillColor: Colors.grey[50],
                           ),
+                          validator: (value) {
+                            if (value == null || value.isEmpty) return 'Masukkan durasi';
+                            final duration = double.tryParse(value);
+                            if (duration == null || duration <= 0) return 'Durasi harus lebih dari 0';
+                            return null;
+                          },
                         ),
-                        const SizedBox(height: 20),
-                        Container(
-                          padding: const EdgeInsets.all(16),
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(12),
+                        const SizedBox(height: 16),
+                        TextFormField(
+                          controller: _metController,
+                          keyboardType: TextInputType.number,
+                          decoration: InputDecoration(
+                            labelText: 'MET Value',
+                            hintText: 'Contoh: 3.5 (jalan), 8.0 (lari)',
+                            prefixIcon: const Icon(Icons.speed),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            filled: true,
+                            fillColor: Colors.grey[50],
+                            helperText: 'MET (Metabolic Equivalent) - intensitas aktivitas',
                           ),
-                          child: Text(
-                            _result!['interpretation'] ?? '',
-                            style: Theme.of(context).textTheme.bodyMedium,
-                            textAlign: TextAlign.center,
-                          ),
+                          validator: (value) {
+                            if (value == null || value.isEmpty) return 'Masukkan MET value';
+                            final met = double.tryParse(value);
+                            if (met == null || met <= 0) return 'MET harus lebih dari 0';
+                            return null;
+                          },
                         ),
-                        const SizedBox(height: 20),
+                        const SizedBox(height: 24),
                         SizedBox(
                           width: double.infinity,
                           child: ElevatedButton.icon(
-                            onPressed: () async {
-                              final shouldSave = await showDialog<bool>(
-                                context: context,
-                                builder: (context) => AlertDialog(
-                                  title: const Text('Simpan Hasil?'),
-                                  content: const Text(
-                                    'Apakah Anda ingin menyimpan hasil perhitungan ini ke riwayat?',
-                                  ),
-                                  actions: [
-                                    TextButton(
-                                      onPressed: () => Navigator.pop(context, false),
-                                      child: const Text('Batal'),
+                            onPressed: _isCalculating ? null : _calculate,
+                            icon: _isCalculating
+                                ? const SizedBox(
+                                    width: 20,
+                                    height: 20,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
                                     ),
-                                    ElevatedButton(
-                                      onPressed: () => Navigator.pop(context, true),
-                                      child: const Text('Simpan'),
-                                    ),
-                                  ],
-                                ),
-                              );
-                              
-                              if (shouldSave == true) {
-                                await _saveResult();
-                              }
-                            },
-                            icon: const Icon(Icons.save),
-                            label: const Text('Simpan Hasil'),
+                                  )
+                                : const Icon(Icons.calculate),
+                            label: Text(_isCalculating ? 'Menghitung...' : 'Hitung Calories Burned'),
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: AppTheme.primaryGreen,
+                              backgroundColor: caloriesBurnedColor,
                               foregroundColor: Colors.white,
-                              padding: const EdgeInsets.symmetric(vertical: 16),
+                              padding: const EdgeInsets.symmetric(vertical: 18),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              elevation: 3,
                             ),
                           ),
                         ),
                       ],
                     ),
-                  ),
+                    if (_result != null) ...[
+                      const SizedBox(height: 20),
+                      CalculatorBaseWidget.buildResultCard(
+                        context: context,
+                        title: 'Hasil Perhitungan',
+                        color: caloriesBurnedColor,
+                        content: Column(
+                          children: [
+                            Text(
+                              'Calories Burned',
+                              style: Theme.of(context).textTheme.bodyLarge,
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              '${_result!['calories_burned']} ${_result!['unit']}',
+                              style: Theme.of(context).textTheme.displayLarge?.copyWith(
+                                color: caloriesBurnedColor,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            const SizedBox(height: 20),
+                            Container(
+                              padding: const EdgeInsets.all(16),
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(
+                                  color: Colors.grey[200]!,
+                                  width: 1,
+                                ),
+                              ),
+                              child: Text(
+                                _result!['interpretation'] ?? '',
+                                style: Theme.of(context).textTheme.bodyMedium,
+                                textAlign: TextAlign.center,
+                              ),
+                            ),
+                          ],
+                        ),
+                        actions: [
+                          CalculatorBaseWidget.buildAIExplanationButton(
+                            context: context,
+                            calculationType: 'CaloriesBurned',
+                            result: _result!,
+                            color: caloriesBurnedColor,
+                          ),
+                          const SizedBox(height: 12),
+                          SizedBox(
+                            width: double.infinity,
+                            child: ElevatedButton.icon(
+                              onPressed: () async {
+                                final shouldSave = await showDialog<bool>(
+                                  context: context,
+                                  builder: (context) => AlertDialog(
+                                    title: const Text('Simpan Hasil?'),
+                                    content: const Text(
+                                      'Apakah Anda ingin menyimpan hasil perhitungan ini ke riwayat?',
+                                    ),
+                                    actions: [
+                                      TextButton(
+                                        onPressed: () => Navigator.pop(context, false),
+                                        child: const Text('Batal'),
+                                      ),
+                                      ElevatedButton(
+                                        onPressed: () => Navigator.pop(context, true),
+                                        child: const Text('Simpan'),
+                                      ),
+                                    ],
+                                  ),
+                                );
+                                
+                                if (shouldSave == true) {
+                                  await _saveResult();
+                                }
+                              },
+                              icon: const Icon(Icons.save),
+                              label: const Text('Simpan Hasil'),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: AppTheme.primaryGreen,
+                                foregroundColor: Colors.white,
+                                padding: const EdgeInsets.symmetric(vertical: 16),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 20),
+                      CalculatorBaseWidget.buildRelatedCalculators(
+                        context: context,
+                        calculators: [
+                          RelatedCalculator(
+                            title: 'TDEE',
+                            icon: Icons.fitness_center,
+                            color: Colors.orange,
+                            route: '/calculator/tdee',
+                          ),
+                          RelatedCalculator(
+                            title: 'Daily Calories',
+                            icon: Icons.local_fire_department,
+                            color: Colors.brown,
+                            route: '/calculator/daily-calories',
+                          ),
+                        ],
+                      ),
+                    ],
+                  ],
                 ),
-              ],
-            ],
+              ),
+            ),
           ),
-        ),
+        ],
       ),
     );
   }

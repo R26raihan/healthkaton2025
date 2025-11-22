@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import 'package:fl_chart/fl_chart.dart';
+import 'package:video_player/video_player.dart';
 import 'package:apps/core/constants/app_routes.dart';
 import 'package:apps/core/theme/app_theme.dart';
 import 'package:apps/presentation/providers/health_calculator_provider.dart';
@@ -238,159 +239,480 @@ class _HealthTrendsPageState extends State<HealthTrendsPage> {
     // Get color based on metric type
     final color = _getMetricColor(metricType);
     
+    // Calculate statistics
+    final values = metrics.map((m) => m.metricValue).toList();
+    final avg = values.reduce((a, b) => a + b) / values.length;
+    final min = values.reduce((a, b) => a < b ? a : b);
+    final max = values.reduce((a, b) => a > b ? a : b);
+    final trend = metrics.length > 1 
+        ? (metrics.last.metricValue - metrics.first.metricValue) 
+        : 0.0;
+    final trendIcon = trend > 0 
+        ? Icons.trending_up 
+        : trend < 0 
+            ? Icons.trending_down 
+            : Icons.trending_flat;
+    final trendColor = trend > 0 
+        ? Colors.red 
+        : trend < 0 
+            ? Colors.green 
+            : Colors.grey;
+    
     return Card(
       margin: const EdgeInsets.only(bottom: 16),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      elevation: 4,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: InkWell(
+        onTap: () => _showAIAnalysis(metricType, metrics, color),
+        borderRadius: BorderRadius.circular(20),
+        child: Container(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(
+              color: color.withOpacity(0.2),
+              width: 1.5,
+            ),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  metricType,
-                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.bold,
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: color.withOpacity(0.15),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: Icon(
+                            _getMetricIcon(metricType),
+                            color: color,
+                            size: 24,
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              metricType,
+                              style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                                fontWeight: FontWeight.bold,
+                                color: color,
+                              ),
+                            ),
+                            Text(
+                              '${metrics.length} data point',
+                              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                color: Colors.grey[600],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: trendColor.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(
+                          color: trendColor.withOpacity(0.3),
+                          width: 1,
+                        ),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            trendIcon,
+                            color: trendColor,
+                            size: 16,
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            trend > 0 
+                                ? '+${trend.toStringAsFixed(1)}' 
+                                : trend < 0 
+                                    ? trend.toStringAsFixed(1) 
+                                    : '0.0',
+                            style: TextStyle(
+                              color: trendColor,
+                              fontWeight: FontWeight.w600,
+                              fontSize: 12,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 20),
+                SizedBox(
+                  height: 220,
+                  child: LineChart(
+                    LineChartData(
+                      gridData: FlGridData(
+                        show: true,
+                        drawVerticalLine: false,
+                        horizontalInterval: _calculateInterval(metrics),
+                        getDrawingHorizontalLine: (value) {
+                          return FlLine(
+                            color: Colors.grey[200]!,
+                            strokeWidth: 1,
+                            dashArray: [5, 5],
+                          );
+                        },
+                      ),
+                      titlesData: FlTitlesData(
+                        leftTitles: AxisTitles(
+                          sideTitles: SideTitles(
+                            showTitles: true,
+                            reservedSize: 50,
+                            getTitlesWidget: (value, meta) {
+                              return Padding(
+                                padding: const EdgeInsets.only(right: 8),
+                                child: Text(
+                                  value.toStringAsFixed(1),
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    color: Colors.grey[600],
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
+                        ),
+                        bottomTitles: AxisTitles(
+                          sideTitles: SideTitles(
+                            showTitles: true,
+                            reservedSize: 35,
+                            getTitlesWidget: (value, meta) {
+                              if (value.toInt() >= 0 && value.toInt() < metrics.length) {
+                                final date = metrics[value.toInt()].recordedAt;
+                                return Text(
+                                  DateFormat('MM/dd').format(date),
+                                  style: TextStyle(
+                                    fontSize: 10,
+                                    color: Colors.grey[600],
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                );
+                              }
+                              return const Text('');
+                            },
+                          ),
+                        ),
+                        rightTitles: const AxisTitles(
+                          sideTitles: SideTitles(showTitles: false),
+                        ),
+                        topTitles: const AxisTitles(
+                          sideTitles: SideTitles(showTitles: false),
+                        ),
+                      ),
+                      borderData: FlBorderData(
+                        show: true,
+                        border: Border.all(
+                          color: Colors.grey[300]!,
+                          width: 1.5,
+                        ),
+                      ),
+                      lineBarsData: [
+                        LineChartBarData(
+                          spots: spots,
+                          isCurved: true,
+                          curveSmoothness: 0.35,
+                          color: color,
+                          barWidth: 4,
+                          dotData: FlDotData(
+                            show: true,
+                            getDotPainter: (spot, percent, barData, index) {
+                              return FlDotCirclePainter(
+                                radius: 5,
+                                color: color,
+                                strokeWidth: 3,
+                                strokeColor: Colors.white,
+                              );
+                            },
+                          ),
+                          belowBarData: BarAreaData(
+                            show: true,
+                            gradient: LinearGradient(
+                              begin: Alignment.topCenter,
+                              end: Alignment.bottomCenter,
+                              colors: [
+                                color.withOpacity(0.3),
+                                color.withOpacity(0.05),
+                              ],
+                            ),
+                          ),
+                          shadow: Shadow(
+                            color: color.withOpacity(0.3),
+                            blurRadius: 8,
+                            offset: const Offset(0, 4),
+                          ),
+                        ),
+                      ],
+                      minY: _getMinValue(metrics),
+                      maxY: _getMaxValue(metrics),
+                      lineTouchData: LineTouchData(
+                        touchTooltipData: LineTouchTooltipData(
+                          getTooltipItems: (List<LineBarSpot> touchedSpots) {
+                            return touchedSpots.map((LineBarSpot touchedSpot) {
+                              final index = touchedSpot.x.toInt();
+                              if (index >= 0 && index < metrics.length) {
+                                final metric = metrics[index];
+                                return LineTooltipItem(
+                                  '${metric.metricValue.toStringAsFixed(1)} ${metric.unit}\n${DateFormat('dd MMM yyyy').format(metric.recordedAt)}',
+                                  TextStyle(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 12,
+                                  ),
+                                );
+                              }
+                              return null;
+                            }).toList();
+                          },
+                        ),
+                      ),
+                    ),
                   ),
                 ),
-                Text(
-                  '${metrics.length} data',
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: Colors.grey[600],
+                const SizedBox(height: 16),
+                // Statistics Row
+                Row(
+                  children: [
+                    Expanded(
+                      child: _buildStatCard(
+                        context,
+                        'Rata-rata',
+                        avg.toStringAsFixed(1),
+                        metrics.first.unit,
+                        Icons.analytics_outlined,
+                        color,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: _buildStatCard(
+                        context,
+                        'Min',
+                        min.toStringAsFixed(1),
+                        metrics.first.unit,
+                        Icons.arrow_downward,
+                        Colors.blue,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: _buildStatCard(
+                        context,
+                        'Max',
+                        max.toStringAsFixed(1),
+                        metrics.first.unit,
+                        Icons.arrow_upward,
+                        Colors.red,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                // Latest value with AI button
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [
+                        color.withOpacity(0.15),
+                        color.withOpacity(0.05),
+                      ],
+                    ),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: color.withOpacity(0.3),
+                      width: 1.5,
+                    ),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Nilai Terakhir',
+                            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                              color: Colors.grey[600],
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            '${metrics.last.metricValue} ${metrics.last.unit}',
+                            style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                              fontWeight: FontWeight.bold,
+                              color: color,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            DateFormat('dd MMM yyyy, HH:mm').format(metrics.last.recordedAt),
+                            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                              color: Colors.grey[600],
+                            ),
+                          ),
+                        ],
+                      ),
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: [
+                              Colors.blue.withOpacity(0.2),
+                              Colors.purple.withOpacity(0.2),
+                            ],
+                          ),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: Colors.blue.withOpacity(0.3),
+                            width: 1.5,
+                          ),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.auto_awesome,
+                              color: Colors.blue,
+                              size: 20,
+                            ),
+                            const SizedBox(width: 6),
+                            Text(
+                              'Analisa AI',
+                              style: TextStyle(
+                                color: Colors.blue,
+                                fontWeight: FontWeight.w600,
+                                fontSize: 13,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ],
             ),
-            const SizedBox(height: 16),
-            SizedBox(
-              height: 200,
-              child: LineChart(
-                LineChartData(
-                  gridData: FlGridData(
-                    show: true,
-                    drawVerticalLine: false,
-                    horizontalInterval: _calculateInterval(metrics),
-                  ),
-                  titlesData: FlTitlesData(
-                    leftTitles: AxisTitles(
-                      sideTitles: SideTitles(
-                        showTitles: true,
-                        reservedSize: 40,
-                        getTitlesWidget: (value, meta) {
-                          return Text(
-                            value.toStringAsFixed(1),
-                            style: const TextStyle(fontSize: 10),
-                          );
-                        },
-                      ),
-                    ),
-                    bottomTitles: AxisTitles(
-                      sideTitles: SideTitles(
-                        showTitles: true,
-                        reservedSize: 30,
-                        getTitlesWidget: (value, meta) {
-                          if (value.toInt() >= 0 && value.toInt() < metrics.length) {
-                            final date = metrics[value.toInt()].recordedAt;
-                            return Text(
-                              DateFormat('MM/dd').format(date),
-                              style: const TextStyle(fontSize: 10),
-                            );
-                          }
-                          return const Text('');
-                        },
-                      ),
-                    ),
-                    rightTitles: const AxisTitles(
-                      sideTitles: SideTitles(showTitles: false),
-                    ),
-                    topTitles: const AxisTitles(
-                      sideTitles: SideTitles(showTitles: false),
-                    ),
-                  ),
-                  borderData: FlBorderData(
-                    show: true,
-                    border: Border.all(color: Colors.grey[300]!),
-                  ),
-                  lineBarsData: [
-                    LineChartBarData(
-                      spots: spots,
-                      isCurved: true,
-                      color: color,
-                      barWidth: 3,
-                      dotData: FlDotData(
-                        show: true,
-                        getDotPainter: (spot, percent, barData, index) {
-                          return FlDotCirclePainter(
-                            radius: 4,
-                            color: color,
-                            strokeWidth: 2,
-                            strokeColor: Colors.white,
-                          );
-                        },
-                      ),
-                      belowBarData: BarAreaData(
-                        show: true,
-                        color: color.withOpacity(0.1),
-                      ),
-                    ),
-                  ],
-                  minY: _getMinValue(metrics),
-                  maxY: _getMaxValue(metrics),
+          ),
+        ),
+      ),
+    );
+  }
+  
+  Widget _buildStatCard(BuildContext context, String label, String value, String unit, IconData icon, Color color) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: color.withOpacity(0.2),
+          width: 1,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(icon, size: 16, color: color),
+              const SizedBox(width: 4),
+              Text(
+                label,
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: Colors.grey[600],
+                  fontSize: 11,
                 ),
               ),
+            ],
+          ),
+          const SizedBox(height: 4),
+          Text(
+            '$value $unit',
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+              fontWeight: FontWeight.bold,
+              color: color,
             ),
-            const SizedBox(height: 12),
-            // Latest value
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: color.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Nilai Terakhir',
-                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: Colors.grey[600],
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        '${metrics.last.metricValue} ${metrics.last.unit}',
-                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.bold,
-                          color: color,
-                        ),
-                      ),
-                    ],
-                  ),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    children: [
-                      Text(
-                        'Tanggal',
-                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: Colors.grey[600],
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        DateFormat('dd MMM yyyy').format(metrics.last.recordedAt),
-                        style: Theme.of(context).textTheme.bodyMedium,
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
+          ),
+        ],
+      ),
+    );
+  }
+  
+  IconData _getMetricIcon(String metricType) {
+    switch (metricType) {
+      case 'BMI':
+        return Icons.monitor_weight;
+      case 'BMR':
+        return Icons.local_fire_department;
+      case 'TDEE':
+        return Icons.fitness_center;
+      case 'BodyFat':
+        return Icons.person;
+      case 'MaxHeartRate':
+        return Icons.favorite;
+      default:
+        return Icons.show_chart;
+    }
+  }
+  
+  void _showAIAnalysis(String metricType, List<HealthMetric> metrics, Color color) {
+    // Sort by date
+    metrics.sort((a, b) => a.recordedAt.compareTo(b.recordedAt));
+    
+    // Format metrics data untuk query
+    final metricsText = metrics.map((m) {
+      return '${DateFormat('yyyy-MM-dd').format(m.recordedAt)}: ${m.metricValue} ${m.unit}';
+    }).join('\n');
+    
+    // Calculate statistics
+    final values = metrics.map((m) => m.metricValue).toList();
+    final avg = values.reduce((a, b) => a + b) / values.length;
+    final min = values.reduce((a, b) => a < b ? a : b);
+    final max = values.reduce((a, b) => a > b ? a : b);
+    final trend = metrics.length > 1 
+        ? (metrics.last.metricValue - metrics.first.metricValue) 
+        : 0.0;
+    final latest = metrics.last.metricValue;
+    
+    final query = 'Analisa tren data $metricType saya:\n\n'
+        'Data historis:\n$metricsText\n\n'
+        'Statistik:\n'
+        '- Nilai terakhir: $latest ${metrics.first.unit}\n'
+        '- Rata-rata: ${avg.toStringAsFixed(2)} ${metrics.first.unit}\n'
+        '- Minimum: $min ${metrics.first.unit}\n'
+        '- Maksimum: $max ${metrics.first.unit}\n'
+        '- Tren: ${trend > 0 ? "Naik" : trend < 0 ? "Turun" : "Stabil"} (${trend.toStringAsFixed(2)} ${metrics.first.unit})\n\n'
+        'Berikan analisa mendalam tentang tren kesehatan saya, identifikasi pola, dan berikan rekomendasi yang bisa saya lakukan untuk meningkatkan kesehatan saya.';
+    
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => _MetricAIAnalysisBottomSheet(
+        metricType: metricType,
+        metrics: metrics,
+        color: color,
+        initialQuery: query,
       ),
     );
   }
@@ -436,7 +758,590 @@ class _HealthTrendsPageState extends State<HealthTrendsPage> {
   }
 }
 
-/// Chat Dialog untuk analisa metrics
+/// Bottom Sheet untuk analisa metrics dengan AI
+class _MetricAIAnalysisBottomSheet extends StatefulWidget {
+  final String metricType;
+  final List<HealthMetric> metrics;
+  final Color color;
+  final String initialQuery;
+  
+  const _MetricAIAnalysisBottomSheet({
+    required this.metricType,
+    required this.metrics,
+    required this.color,
+    required this.initialQuery,
+  });
+  
+  @override
+  State<_MetricAIAnalysisBottomSheet> createState() => _MetricAIAnalysisBottomSheetState();
+}
+
+class _MetricAIAnalysisBottomSheetState extends State<_MetricAIAnalysisBottomSheet> {
+  bool _hasQueried = false;
+  VideoPlayerController? _videoController;
+  bool _isVideoInitialized = false;
+  
+  @override
+  void initState() {
+    super.initState();
+    _initializeVideo();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!_hasQueried && mounted) {
+        _queryAI();
+      }
+    });
+  }
+  
+  Future<void> _initializeVideo() async {
+    try {
+      _videoController = VideoPlayerController.asset(
+        'assets/images/asisten_animasi_hello.mp4',
+      );
+      
+      await _videoController!.initialize();
+      _videoController!.setLooping(true);
+      await _videoController!.play();
+      
+      if (mounted) {
+        setState(() {
+          _isVideoInitialized = true;
+        });
+      }
+    } catch (e) {
+      debugPrint('Error loading video: $e');
+      if (mounted) {
+        setState(() {
+          _isVideoInitialized = false;
+        });
+      }
+    }
+  }
+  
+  @override
+  void dispose() {
+    _videoController?.dispose();
+    super.dispose();
+  }
+  
+  Future<void> _queryAI() async {
+    if (_hasQueried) return;
+    _hasQueried = true;
+    
+    final ragProvider = context.read<RagChatProvider>();
+    ragProvider.clearChat();
+    await ragProvider.sendMessage(widget.initialQuery);
+  }
+  
+  @override
+  Widget build(BuildContext context) {
+    // Calculate statistics
+    final values = widget.metrics.map((m) => m.metricValue).toList();
+    final avg = values.reduce((a, b) => a + b) / values.length;
+    final min = values.reduce((a, b) => a < b ? a : b);
+    final max = values.reduce((a, b) => a > b ? a : b);
+    final latest = widget.metrics.last.metricValue;
+    final trend = widget.metrics.length > 1 
+        ? (widget.metrics.last.metricValue - widget.metrics.first.metricValue) 
+        : 0.0;
+    
+    return Container(
+      height: MediaQuery.of(context).size.height * 0.9,
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      child: Column(
+        children: [
+          // Handle bar
+          Container(
+            margin: const EdgeInsets.only(top: 12),
+            width: 40,
+            height: 4,
+            decoration: BoxDecoration(
+              color: Colors.grey[300],
+              borderRadius: BorderRadius.circular(2),
+            ),
+          ),
+          // Header dengan gradient
+          Container(
+            padding: EdgeInsets.only(
+              left: 20,
+              right: 20,
+              top: 20 + MediaQuery.of(context).padding.top,
+              bottom: 20,
+            ),
+            decoration: BoxDecoration(
+              gradient: AppTheme.backgroundGradient,
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+              boxShadow: [
+                BoxShadow(
+                  color: widget.color.withOpacity(0.2),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            child: Row(
+              children: [
+                // Video Player sebagai icon animasi
+                Container(
+                  width: 60,
+                  height: 60,
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.2),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: Colors.white.withOpacity(0.3),
+                      width: 1,
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: widget.color.withOpacity(0.2),
+                        blurRadius: 4,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  clipBehavior: Clip.antiAlias,
+                  child: _isVideoInitialized && _videoController != null
+                      ? SizedBox.expand(
+                          child: FittedBox(
+                            fit: BoxFit.cover,
+                            child: SizedBox(
+                              width: _videoController!.value.size.width,
+                              height: _videoController!.value.size.height,
+                              child: VideoPlayer(_videoController!),
+                            ),
+                          ),
+                        )
+                      : Container(
+                          color: widget.color.withOpacity(0.1),
+                          child: Center(
+                            child: Icon(
+                              Icons.auto_awesome,
+                              color: widget.color,
+                              size: 24,
+                            ),
+                          ),
+                        ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Analisa Tren AI',
+                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                      ),
+                      Text(
+                        widget.metricType,
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: Colors.white.withOpacity(0.9),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.close, color: Colors.white),
+                  onPressed: () => Navigator.of(context).pop(),
+                ),
+              ],
+            ),
+          ),
+          // Content
+          Expanded(
+            child: Consumer<RagChatProvider>(
+              builder: (context, ragProvider, child) {
+                if (ragProvider.isLoading && ragProvider.messages.isEmpty) {
+                  return _buildLoadingState();
+                }
+                
+                if (ragProvider.errorMessage != null && ragProvider.messages.isEmpty) {
+                  return _buildErrorState(ragProvider.errorMessage ?? 'Terjadi kesalahan');
+                }
+                
+                return SingleChildScrollView(
+                  padding: const EdgeInsets.all(20),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Summary Statistics Card
+                      _buildSummaryCard(context, widget.metrics, widget.color, avg, min, max, latest, trend),
+                      const SizedBox(height: 20),
+                      // AI Response
+                      if (ragProvider.messages.isNotEmpty)
+                        _buildAIResponse(context, ragProvider),
+                      if (ragProvider.isLoading)
+                        _buildLoadingIndicator(),
+                    ],
+                  ),
+                );
+              },
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+  
+  Widget _buildLoadingState() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          CircularProgressIndicator(
+            valueColor: AlwaysStoppedAnimation<Color>(widget.color),
+          ),
+          const SizedBox(height: 16),
+          Text(
+            'Menganalisa tren data...',
+            style: TextStyle(
+              color: Colors.grey[600],
+              fontSize: 16,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+  
+  Widget _buildErrorState(String error) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.error_outline,
+              size: 64,
+              color: Colors.red[300],
+            ),
+            const SizedBox(height: 16),
+            Text(
+              error,
+              style: Theme.of(context).textTheme.bodyLarge,
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 16),
+            ElevatedButton(
+              onPressed: () {
+                _hasQueried = false;
+                _queryAI();
+              },
+              child: const Text('Coba Lagi'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+  
+  Widget _buildSummaryCard(BuildContext context, List<HealthMetric> metrics, Color color, double avg, double min, double max, double latest, double trend) {
+    final trendIcon = trend > 0 
+        ? Icons.trending_up 
+        : trend < 0 
+            ? Icons.trending_down 
+            : Icons.trending_flat;
+    final trendColor = trend > 0 
+        ? Colors.red 
+        : trend < 0 
+            ? Colors.green 
+            : Colors.grey;
+    
+    return Card(
+      elevation: 4,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: color.withOpacity(0.3),
+            width: 1.5,
+          ),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: color.withOpacity(0.15),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Icon(
+                      _getMetricIcon(widget.metricType),
+                      color: color,
+                      size: 24,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Ringkasan Statistik',
+                          style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        Text(
+                          '${metrics.length} data point',
+                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color: Colors.grey[600],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 20),
+              Row(
+                children: [
+                  Expanded(
+                    child: _buildStatItem('Rata-rata', avg.toStringAsFixed(1), metrics.first.unit, Icons.analytics_outlined, color),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: _buildStatItem('Min', min.toStringAsFixed(1), metrics.first.unit, Icons.arrow_downward, Colors.blue),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  Expanded(
+                    child: _buildStatItem('Max', max.toStringAsFixed(1), metrics.first.unit, Icons.arrow_upward, Colors.red),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: _buildStatItem('Tren', trend > 0 ? '+${trend.toStringAsFixed(1)}' : trend.toStringAsFixed(1), metrics.first.unit, trendIcon, trendColor),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              Divider(color: Colors.grey[300]),
+              const SizedBox(height: 12),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Nilai Terakhir',
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: Colors.grey[600],
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        '$latest ${metrics.first.unit}',
+                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                          fontWeight: FontWeight.bold,
+                          color: color,
+                        ),
+                      ),
+                    ],
+                  ),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      Text(
+                        'Periode',
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: Colors.grey[600],
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        '${DateFormat('dd MMM').format(metrics.first.recordedAt)} - ${DateFormat('dd MMM yyyy').format(metrics.last.recordedAt)}',
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          fontWeight: FontWeight.w500,
+                        ),
+                        textAlign: TextAlign.right,
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+  
+  Widget _buildStatItem(String label, String value, String unit, IconData icon, Color color) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: color.withOpacity(0.2),
+          width: 1,
+        ),
+      ),
+      child: Row(
+        children: [
+          Icon(icon, size: 18, color: color),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  label,
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: Colors.grey[600],
+                  ),
+                ),
+                Text(
+                  '$value $unit',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                    color: color,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+  
+  Widget _buildAIResponse(BuildContext context, RagChatProvider provider) {
+    final aiMessages = provider.messages.where((m) => !m.isUser).toList();
+    
+    if (aiMessages.isEmpty) {
+      return const SizedBox.shrink();
+    }
+    
+    return Card(
+      elevation: 2,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(16),
+          gradient: LinearGradient(
+            colors: [
+              Colors.blue.withOpacity(0.05),
+              Colors.purple.withOpacity(0.05),
+            ],
+          ),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: Colors.blue.withOpacity(0.15),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: const Icon(
+                      Icons.auto_awesome,
+                      color: Colors.blue,
+                      size: 20,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Text(
+                    'Analisa AI',
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              ...aiMessages.map((message) {
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 12),
+                  child: Text(
+                    message.message,
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      height: 1.6,
+                    ),
+                  ),
+                );
+              }),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+  
+  Widget _buildLoadingIndicator() {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          SizedBox(
+            width: 20,
+            height: 20,
+            child: CircularProgressIndicator(
+              strokeWidth: 2,
+              valueColor: AlwaysStoppedAnimation<Color>(widget.color),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Text(
+            'AI sedang menganalisa...',
+            style: TextStyle(
+              color: Colors.grey[600],
+              fontSize: 14,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+  
+  IconData _getMetricIcon(String metricType) {
+    switch (metricType) {
+      case 'BMI':
+        return Icons.monitor_weight;
+      case 'BMR':
+        return Icons.local_fire_department;
+      case 'TDEE':
+        return Icons.fitness_center;
+      case 'BodyFat':
+        return Icons.person;
+      case 'MaxHeartRate':
+        return Icons.favorite;
+      default:
+        return Icons.show_chart;
+    }
+  }
+}
+
+/// Chat Dialog untuk analisa metrics (legacy, masih digunakan untuk button analytics)
 class _ChatDialog extends StatelessWidget {
   const _ChatDialog();
   

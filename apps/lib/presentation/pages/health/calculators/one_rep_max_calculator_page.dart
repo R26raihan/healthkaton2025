@@ -70,7 +70,6 @@ class _OneRepMaxCalculatorPageState extends State<OneRepMaxCalculatorPage> {
             backgroundColor: Colors.green,
           ),
         );
-        Navigator.of(context).pop();
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -84,182 +83,204 @@ class _OneRepMaxCalculatorPageState extends State<OneRepMaxCalculatorPage> {
   
   @override
   Widget build(BuildContext context) {
+    final oneRepMaxColor = Colors.deepPurple;
+    
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Kalkulator One Rep Max'),
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(20),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Card(
-                child: Padding(
-                  padding: const EdgeInsets.all(20),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Masukkan Data',
-                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      const SizedBox(height: 20),
-                      TextFormField(
-                        controller: _weightController,
-                        keyboardType: TextInputType.number,
-                        decoration: const InputDecoration(
-                          labelText: 'Berat yang Diangkat (kg)',
-                          hintText: 'Contoh: 50',
-                          prefixIcon: Icon(Icons.fitness_center),
-                          border: OutlineInputBorder(),
-                        ),
-                        validator: (value) {
-                          if (value == null || value.isEmpty) return 'Masukkan berat';
-                          final weight = double.tryParse(value);
-                          if (weight == null || weight <= 0) return 'Berat harus lebih dari 0';
-                          return null;
-                        },
-                      ),
-                      const SizedBox(height: 16),
-                      TextFormField(
-                        controller: _repsController,
-                        keyboardType: TextInputType.number,
-                        decoration: const InputDecoration(
-                          labelText: 'Jumlah Repetisi',
-                          hintText: 'Contoh: 10',
-                          prefixIcon: Icon(Icons.repeat),
-                          border: OutlineInputBorder(),
-                          helperText: 'Jumlah repetisi maksimal yang bisa dilakukan',
-                        ),
-                        validator: (value) {
-                          if (value == null || value.isEmpty) return 'Masukkan jumlah repetisi';
-                          final reps = int.tryParse(value);
-                          if (reps == null || reps <= 0 || reps > 30) return 'Repetisi harus 1-30';
-                          return null;
-                        },
-                      ),
-                      const SizedBox(height: 24),
-                      SizedBox(
-                        width: double.infinity,
-                        child: ElevatedButton.icon(
-                          onPressed: _isCalculating ? null : _calculate,
-                          icon: _isCalculating
-                              ? const SizedBox(
-                                  width: 20,
-                                  height: 20,
-                                  child: CircularProgressIndicator(strokeWidth: 2),
-                                )
-                              : const Icon(Icons.calculate),
-                          label: Text(_isCalculating ? 'Menghitung...' : 'Hitung 1RM'),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.deepPurple,
-                            foregroundColor: Colors.white,
-                            padding: const EdgeInsets.symmetric(vertical: 16),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
+      body: CustomScrollView(
+        slivers: [
+          SliverAppBar(
+            expandedHeight: 180,
+            pinned: true,
+            flexibleSpace: FlexibleSpaceBar(
+              background: CalculatorBaseWidget.buildHeader(
+                context: context,
+                title: 'Kalkulator One Rep Max',
+                subtitle: 'Kekuatan Maksimal Satu Repetisi',
+                color: oneRepMaxColor,
+                icon: Icons.fitness_center,
               ),
-              
-              if (_result != null) ...[
-                const SizedBox(height: 20),
-                Card(
-                  color: Colors.deepPurple.withOpacity(0.1),
-                  child: Padding(
-                    padding: const EdgeInsets.all(20),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+            ),
+          ),
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.all(20),
+              child: Form(
+                key: _formKey,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    CalculatorBaseWidget.buildInputCard(
+                      context: context,
+                      title: 'Masukkan Data',
+                      color: oneRepMaxColor,
                       children: [
-                        Text(
-                          'Hasil Perhitungan',
-                          style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                            fontWeight: FontWeight.bold,
+                        TextFormField(
+                          controller: _weightController,
+                          keyboardType: TextInputType.number,
+                          decoration: InputDecoration(
+                            labelText: 'Berat yang Diangkat (kg)',
+                            hintText: 'Contoh: 50',
+                            prefixIcon: const Icon(Icons.fitness_center),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            filled: true,
+                            fillColor: Colors.grey[50],
                           ),
+                          validator: (value) {
+                            if (value == null || value.isEmpty) return 'Masukkan berat';
+                            final weight = double.tryParse(value);
+                            if (weight == null || weight <= 0) return 'Berat harus lebih dari 0';
+                            return null;
+                          },
                         ),
-                        const SizedBox(height: 20),
-                        Center(
-                          child: Column(
-                            children: [
-                              Text(
-                                'One Rep Max',
-                                style: Theme.of(context).textTheme.bodyLarge,
-                              ),
-                              const SizedBox(height: 8),
-                              Text(
-                                '${_result!['one_rep_max']} ${_result!['unit']}',
-                                style: Theme.of(context).textTheme.displayLarge?.copyWith(
-                                  color: Colors.deepPurple,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ],
+                        const SizedBox(height: 16),
+                        TextFormField(
+                          controller: _repsController,
+                          keyboardType: TextInputType.number,
+                          decoration: InputDecoration(
+                            labelText: 'Jumlah Repetisi',
+                            hintText: 'Contoh: 10',
+                            prefixIcon: const Icon(Icons.repeat),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            filled: true,
+                            fillColor: Colors.grey[50],
+                            helperText: 'Jumlah repetisi maksimal yang bisa dilakukan',
                           ),
+                          validator: (value) {
+                            if (value == null || value.isEmpty) return 'Masukkan jumlah repetisi';
+                            final reps = int.tryParse(value);
+                            if (reps == null || reps <= 0 || reps > 30) return 'Repetisi harus 1-30';
+                            return null;
+                          },
                         ),
-                        const SizedBox(height: 20),
-                        Container(
-                          padding: const EdgeInsets.all(16),
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Text(
-                            _result!['interpretation'] ?? '',
-                            style: Theme.of(context).textTheme.bodyMedium,
-                            textAlign: TextAlign.center,
-                          ),
-                        ),
-                        const SizedBox(height: 20),
+                        const SizedBox(height: 24),
                         SizedBox(
                           width: double.infinity,
                           child: ElevatedButton.icon(
-                            onPressed: () async {
-                              final shouldSave = await showDialog<bool>(
-                                context: context,
-                                builder: (context) => AlertDialog(
-                                  title: const Text('Simpan Hasil?'),
-                                  content: const Text(
-                                    'Apakah Anda ingin menyimpan hasil perhitungan ini ke riwayat?',
-                                  ),
-                                  actions: [
-                                    TextButton(
-                                      onPressed: () => Navigator.pop(context, false),
-                                      child: const Text('Batal'),
+                            onPressed: _isCalculating ? null : _calculate,
+                            icon: _isCalculating
+                                ? const SizedBox(
+                                    width: 20,
+                                    height: 20,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
                                     ),
-                                    ElevatedButton(
-                                      onPressed: () => Navigator.pop(context, true),
-                                      child: const Text('Simpan'),
-                                    ),
-                                  ],
-                                ),
-                              );
-                              
-                              if (shouldSave == true) {
-                                await _saveResult();
-                              }
-                            },
-                            icon: const Icon(Icons.save),
-                            label: const Text('Simpan Hasil'),
+                                  )
+                                : const Icon(Icons.calculate),
+                            label: Text(_isCalculating ? 'Menghitung...' : 'Hitung 1RM'),
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: AppTheme.primaryGreen,
+                              backgroundColor: oneRepMaxColor,
                               foregroundColor: Colors.white,
-                              padding: const EdgeInsets.symmetric(vertical: 16),
+                              padding: const EdgeInsets.symmetric(vertical: 18),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              elevation: 3,
                             ),
                           ),
                         ),
                       ],
                     ),
-                  ),
+                    if (_result != null) ...[
+                      const SizedBox(height: 20),
+                      CalculatorBaseWidget.buildResultCard(
+                        context: context,
+                        title: 'Hasil Perhitungan',
+                        color: oneRepMaxColor,
+                        content: Column(
+                          children: [
+                            Text(
+                              'One Rep Max',
+                              style: Theme.of(context).textTheme.bodyLarge,
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              '${_result!['one_rep_max']} ${_result!['unit']}',
+                              style: Theme.of(context).textTheme.displayLarge?.copyWith(
+                                color: oneRepMaxColor,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            const SizedBox(height: 20),
+                            Container(
+                              padding: const EdgeInsets.all(16),
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(
+                                  color: Colors.grey[200]!,
+                                  width: 1,
+                                ),
+                              ),
+                              child: Text(
+                                _result!['interpretation'] ?? '',
+                                style: Theme.of(context).textTheme.bodyMedium,
+                                textAlign: TextAlign.center,
+                              ),
+                            ),
+                          ],
+                        ),
+                        actions: [
+                          CalculatorBaseWidget.buildAIExplanationButton(
+                            context: context,
+                            calculationType: 'OneRepMax',
+                            result: _result!,
+                            color: oneRepMaxColor,
+                          ),
+                          const SizedBox(height: 12),
+                          SizedBox(
+                            width: double.infinity,
+                            child: ElevatedButton.icon(
+                              onPressed: () async {
+                                final shouldSave = await showDialog<bool>(
+                                  context: context,
+                                  builder: (context) => AlertDialog(
+                                    title: const Text('Simpan Hasil?'),
+                                    content: const Text(
+                                      'Apakah Anda ingin menyimpan hasil perhitungan ini ke riwayat?',
+                                    ),
+                                    actions: [
+                                      TextButton(
+                                        onPressed: () => Navigator.pop(context, false),
+                                        child: const Text('Batal'),
+                                      ),
+                                      ElevatedButton(
+                                        onPressed: () => Navigator.pop(context, true),
+                                        child: const Text('Simpan'),
+                                      ),
+                                    ],
+                                  ),
+                                );
+                                
+                                if (shouldSave == true) {
+                                  await _saveResult();
+                                }
+                              },
+                              icon: const Icon(Icons.save),
+                              label: const Text('Simpan Hasil'),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: AppTheme.primaryGreen,
+                                foregroundColor: Colors.white,
+                                padding: const EdgeInsets.symmetric(vertical: 16),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ],
                 ),
-              ],
-            ],
+              ),
+            ),
           ),
-        ),
+        ],
       ),
     );
   }
