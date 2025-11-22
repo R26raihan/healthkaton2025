@@ -396,122 +396,44 @@ from auth.core.database import engine, Base, get_db
 ### Tech Stack Overview (Mermaid Diagram)
 ```mermaid
 graph TB
-    subgraph Frontend["📱 Frontend (Mobile App)"]
-        Flutter["Flutter<br/>Dart SDK 3.9.2"]
-        Provider["Provider<br/>State Management"]
-        Dio["Dio<br/>HTTP Client"]
-        SecureStorage["Flutter Secure Storage<br/>Secure Data Storage"]
-        SharedPrefs["Shared Preferences<br/>Local Storage"]
-        TTS["Flutter TTS<br/>Text-to-Speech"]
-        FLChart["FL Chart<br/>Charts & Graphs"]
-        VideoPlayer["Video Player<br/>Video Playback"]
-        URLLauncher["URL Launcher<br/>External Links"]
-        GetIt["Get It<br/>Dependency Injection"]
-        Dartz["Dartz<br/>Functional Programming"]
-        Equatable["Equatable<br/>Object Comparison"]
-        UUID["UUID<br/>Unique ID Generation"]
-        Intl["Intl<br/>Internationalization"]
-        IconsPlus["Icons Plus<br/>Icon Library"]
-        TutorialCoach["Tutorial Coach Mark<br/>Onboarding"]
+    subgraph Frontend["📱 Frontend"]
+        Flutter["Flutter<br/>Mobile App"]
     end
     
-    subgraph Backend["⚙️ Backend (API Services)"]
-        FastAPI["FastAPI<br/>Web Framework"]
-        Uvicorn["Uvicorn<br/>ASGI Server"]
-        SQLAlchemy["SQLAlchemy<br/>ORM Database"]
-        Pydantic["Pydantic<br/>Data Validation"]
-        PyMySQL["PyMySQL<br/>MySQL Driver"]
-        PythonDotenv["Python-dotenv<br/>Environment Config"]
-        PythonMultipart["Python-multipart<br/>File Upload"]
+    subgraph Backend["⚙️ Backend"]
+        FastAPI["FastAPI<br/>REST API"]
+        Microservices["Microservices<br/>6 Services"]
     end
     
     subgraph Database["💾 Database"]
-        MySQL["MySQL<br/>Relational Database"]
-        ConnectionPool["Connection Pooling<br/>QueuePool"]
+        MySQL["MySQL"]
     end
     
-    subgraph Auth["🔐 Authentication & Security"]
-        PyJWT["PyJWT<br/>JWT Token Handling"]
-        Passlib["Passlib<br/>Password Hashing (bcrypt)"]
-        PythonJose["Python-jose<br/>JWT Encoding/Decoding"]
-        Cryptography["Cryptography<br/>Crypto Operations"]
-        HTTPBearer["HTTPBearer<br/>Bearer Token Auth"]
+    subgraph AI["🤖 AI/ML"]
+        GeminiAPI["Google Gemini API<br/>Mobile RAG"]
+        OpenRouter["OpenRouter API<br/>Admin RAG"]
     end
     
-    subgraph AI["🤖 AI/ML & LLM"]
-        GeminiAPI["Google Gemini API<br/>gemini-2.0-flash<br/>Mobile RAG"]
-        OpenRouter["OpenRouter API<br/>DeepSeek R1<br/>Admin RAG"]
-        OpenAI["OpenAI SDK<br/>OpenRouter Client"]
-        GoogleGenAI["google-generativeai<br/>Gemini Library"]
-    end
-    
-    subgraph Architecture["🏗️ Architecture Pattern"]
-        Microservices["Microservices<br/>6 Independent Services"]
-        SharedDB["Shared Database<br/>All Services"]
-        JWTAuth["JWT Authentication<br/>Token-based"]
-        RAG["RAG System<br/>Retrieval Augmented Generation"]
-    end
-    
-    subgraph DevTools["🛠️ Development Tools"]
-        Python["Python 3.x<br/>Programming Language"]
-        Venv["Virtual Environment<br/>venv"]
-        FlutterLints["Flutter Lints<br/>Code Linting"]
-        FlutterIcons["Flutter Launcher Icons<br/>App Icons"]
-    end
-    
-    subgraph Deployment["🚀 Deployment & Infrastructure"]
+    subgraph Deployment["🚀 Deployment"]
         Docker["Docker<br/>Containerization"]
-        DockerCompose["Docker Compose<br/>Multi-container"]
-        Biznet["Biznet Cloud<br/>Cloud Provider"]
-        ContainerRegistry["Container Registry<br/>Image Storage"]
-        Orchestration["Container Orchestration<br/>Service Management"]
+        Biznet["Biznet Cloud"]
     end
     
-    Flutter --> Provider
-    Flutter --> Dio
-    Flutter --> SecureStorage
-    Flutter --> TTS
-    Flutter --> FLChart
-    
-    Flutter -->|HTTP Requests| FastAPI
-    Flutter -->|API Calls| Microservices
-    Dio -->|REST API| FastAPI
-    
-    FastAPI --> Uvicorn
-    FastAPI --> SQLAlchemy
-    FastAPI --> Pydantic
-    SQLAlchemy --> PyMySQL
-    PyMySQL --> MySQL
-    
-    FastAPI --> PyJWT
-    PyJWT --> Passlib
-    PyJWT --> PythonJose
-    
-    RAG --> GeminiAPI
-    RAG --> OpenRouter
-    GeminiAPI --> GoogleGenAI
-    OpenRouter --> OpenAI
-    
-    Microservices --> FastAPI
-    Microservices --> SharedDB
-    SharedDB --> MySQL
-    Microservices --> JWTAuth
+    Flutter -->|HTTP/REST API| FastAPI
+    FastAPI --> Microservices
+    Microservices --> MySQL
+    Microservices --> GeminiAPI
+    Microservices --> OpenRouter
     
     Microservices --> Docker
-    Docker --> DockerCompose
-    DockerCompose --> Biznet
-    Docker --> ContainerRegistry
-    Biznet --> Orchestration
-    
+    Docker --> Biznet
     Flutter -->|Deploy| Biznet
-    FastAPI -->|Containerize| Docker
     
     style Flutter fill:#02569B,stroke:#0175C2,color:#fff
     style FastAPI fill:#009688,stroke:#00796B,color:#fff
     style MySQL fill:#4479A1,stroke:#00618A,color:#fff
     style GeminiAPI fill:#4285F4,stroke:#1A73E8,color:#fff
     style OpenRouter fill:#FF6B6B,stroke:#EE5A6F,color:#fff
-    style PyJWT fill:#FF9800,stroke:#F57C00,color:#fff
     style Docker fill:#2496ED,stroke:#0db7ed,color:#fff
     style Biznet fill:#00A8E8,stroke:#0099CC,color:#fff
 ```
