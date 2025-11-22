@@ -459,6 +459,14 @@ graph TB
         FlutterIcons["Flutter Launcher Icons<br/>App Icons"]
     end
     
+    subgraph Deployment["🚀 Deployment & Infrastructure"]
+        Docker["Docker<br/>Containerization"]
+        DockerCompose["Docker Compose<br/>Multi-container"]
+        Biznet["Biznet Cloud<br/>Cloud Provider"]
+        ContainerRegistry["Container Registry<br/>Image Storage"]
+        Orchestration["Container Orchestration<br/>Service Management"]
+    end
+    
     Flutter --> Provider
     Flutter --> Dio
     Flutter --> SecureStorage
@@ -485,12 +493,20 @@ graph TB
     SharedDB --> MySQL
     Microservices --> JWTAuth
     
+    Microservices --> Docker
+    Docker --> DockerCompose
+    DockerCompose --> Biznet
+    Docker --> ContainerRegistry
+    Biznet --> Orchestration
+    
     style Flutter fill:#02569B,stroke:#0175C2,color:#fff
     style FastAPI fill:#009688,stroke:#00796B,color:#fff
     style MySQL fill:#4479A1,stroke:#00618A,color:#fff
     style GeminiAPI fill:#4285F4,stroke:#1A73E8,color:#fff
     style OpenRouter fill:#FF6B6B,stroke:#EE5A6F,color:#fff
     style PyJWT fill:#FF9800,stroke:#F57C00,color:#fff
+    style Docker fill:#2496ED,stroke:#0db7ed,color:#fff
+    style Biznet fill:#00A8E8,stroke:#0099CC,color:#fff
 ```
 
 ### Framework & Libraries
@@ -515,6 +531,13 @@ graph TB
 ### Development Tools
 - **Python 3.x** - Programming language
 - **Virtual Environment** - venv untuk dependency isolation
+
+### Deployment & Infrastructure
+- **Docker** - Containerization untuk setiap service
+- **Docker Compose** - Multi-container orchestration
+- **Biznet Cloud** - Cloud provider untuk deployment
+- **Container Registry** - Image storage dan management
+- **Container Orchestration** - Service management dan scaling
 
 ---
 
