@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:apps/core/services/health_calculator_service.dart';
 import 'package:apps/core/theme/app_theme.dart';
 import 'package:apps/presentation/providers/health_calculator_provider.dart';
+import 'package:apps/presentation/widgets/calculator_base_widget.dart';
 
 /// Body Fat Calculator Page
 class BodyFatCalculatorPage extends StatefulWidget {
@@ -110,281 +111,356 @@ class _BodyFatCalculatorPageState extends State<BodyFatCalculatorPage> {
   
   @override
   Widget build(BuildContext context) {
+    final bodyFatColor = Colors.purple;
+    
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Kalkulator Body Fat'),
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(20),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Card(
-                child: Padding(
-                  padding: const EdgeInsets.all(20),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Masukkan Data',
-                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                          fontWeight: FontWeight.bold,
+      body: CustomScrollView(
+        slivers: [
+          SliverAppBar(
+            expandedHeight: 180,
+            pinned: true,
+            flexibleSpace: FlexibleSpaceBar(
+              background: CalculatorBaseWidget.buildHeader(
+                context: context,
+                title: 'Kalkulator Body Fat',
+                subtitle: 'Persentase Lemak Tubuh',
+                color: bodyFatColor,
+                icon: Icons.person,
+              ),
+            ),
+          ),
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.all(20),
+              child: Form(
+                key: _formKey,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    CalculatorBaseWidget.buildInputCard(
+                      context: context,
+                      title: 'Masukkan Data',
+                      color: bodyFatColor,
+                      children: [
+                        DropdownButtonFormField<String>(
+                          value: _gender,
+                          decoration: InputDecoration(
+                            labelText: 'Jenis Kelamin',
+                            prefixIcon: const Icon(Icons.person),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            filled: true,
+                            fillColor: Colors.grey[50],
+                          ),
+                          items: const [
+                            DropdownMenuItem(value: 'male', child: Text('Laki-laki')),
+                            DropdownMenuItem(value: 'female', child: Text('Perempuan')),
+                          ],
+                          onChanged: (value) {
+                            setState(() {
+                              _gender = value!;
+                            });
+                          },
                         ),
-                      ),
-                      const SizedBox(height: 20),
-                      DropdownButtonFormField<String>(
-                        value: _gender,
-                        decoration: const InputDecoration(
-                          labelText: 'Jenis Kelamin',
-                          prefixIcon: Icon(Icons.person),
-                          border: OutlineInputBorder(),
-                        ),
-                        items: const [
-                          DropdownMenuItem(value: 'male', child: Text('Laki-laki')),
-                          DropdownMenuItem(value: 'female', child: Text('Perempuan')),
-                        ],
-                        onChanged: (value) {
-                          setState(() {
-                            _gender = value!;
-                          });
-                        },
-                      ),
-                      const SizedBox(height: 16),
-                      TextFormField(
-                        controller: _weightController,
-                        keyboardType: TextInputType.number,
-                        decoration: const InputDecoration(
-                          labelText: 'Berat Badan (kg)',
-                          prefixIcon: Icon(Icons.monitor_weight),
-                          border: OutlineInputBorder(),
-                        ),
-                        validator: (value) {
-                          if (value == null || value.isEmpty) return 'Masukkan berat badan';
-                          final weight = double.tryParse(value);
-                          if (weight == null || weight <= 0) return 'Berat badan harus lebih dari 0';
-                          return null;
-                        },
-                      ),
-                      const SizedBox(height: 16),
-                      TextFormField(
-                        controller: _heightController,
-                        keyboardType: TextInputType.number,
-                        decoration: const InputDecoration(
-                          labelText: 'Tinggi Badan (cm)',
-                          prefixIcon: Icon(Icons.height),
-                          border: OutlineInputBorder(),
-                        ),
-                        validator: (value) {
-                          if (value == null || value.isEmpty) return 'Masukkan tinggi badan';
-                          final height = double.tryParse(value);
-                          if (height == null || height <= 0) return 'Tinggi badan harus lebih dari 0';
-                          return null;
-                        },
-                      ),
-                      const SizedBox(height: 16),
-                      TextFormField(
-                        controller: _ageController,
-                        keyboardType: TextInputType.number,
-                        decoration: const InputDecoration(
-                          labelText: 'Usia (tahun)',
-                          prefixIcon: Icon(Icons.calendar_today),
-                          border: OutlineInputBorder(),
-                        ),
-                        validator: (value) {
-                          if (value == null || value.isEmpty) return 'Masukkan usia';
-                          final age = int.tryParse(value);
-                          if (age == null || age <= 0 || age > 120) return 'Usia harus antara 1-120 tahun';
-                          return null;
-                        },
-                      ),
-                      const SizedBox(height: 16),
-                      TextFormField(
-                        controller: _waistController,
-                        keyboardType: TextInputType.number,
-                        decoration: const InputDecoration(
-                          labelText: 'Lingkar Pinggang (cm)',
-                          prefixIcon: Icon(Icons.straighten),
-                          border: OutlineInputBorder(),
-                        ),
-                        validator: (value) {
-                          if (value == null || value.isEmpty) return 'Masukkan lingkar pinggang';
-                          final waist = double.tryParse(value);
-                          if (waist == null || waist <= 0) return 'Lingkar pinggang harus lebih dari 0';
-                          return null;
-                        },
-                      ),
-                      const SizedBox(height: 16),
-                      TextFormField(
-                        controller: _neckController,
-                        keyboardType: TextInputType.number,
-                        decoration: const InputDecoration(
-                          labelText: 'Lingkar Leher (cm)',
-                          prefixIcon: Icon(Icons.straighten),
-                          border: OutlineInputBorder(),
-                        ),
-                        validator: (value) {
-                          if (value == null || value.isEmpty) return 'Masukkan lingkar leher';
-                          final neck = double.tryParse(value);
-                          if (neck == null || neck <= 0) return 'Lingkar leher harus lebih dari 0';
-                          return null;
-                        },
-                      ),
-                      if (_gender == 'female') ...[
                         const SizedBox(height: 16),
                         TextFormField(
-                          controller: _hipController,
+                          controller: _weightController,
                           keyboardType: TextInputType.number,
-                          decoration: const InputDecoration(
-                            labelText: 'Lingkar Pinggul (cm) *',
-                            prefixIcon: Icon(Icons.straighten),
-                            border: OutlineInputBorder(),
-                            helperText: 'Wajib untuk perempuan',
+                          decoration: InputDecoration(
+                            labelText: 'Berat Badan (kg)',
+                            prefixIcon: const Icon(Icons.monitor_weight),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            filled: true,
+                            fillColor: Colors.grey[50],
                           ),
                           validator: (value) {
-                            if (value == null || value.isEmpty) return 'Masukkan lingkar pinggul';
-                            final hip = double.tryParse(value);
-                            if (hip == null || hip <= 0) return 'Lingkar pinggul harus lebih dari 0';
+                            if (value == null || value.isEmpty) return 'Masukkan berat badan';
+                            final weight = double.tryParse(value);
+                            if (weight == null || weight <= 0) return 'Berat badan harus lebih dari 0';
                             return null;
                           },
                         ),
-                      ],
-                      const SizedBox(height: 24),
-                      SizedBox(
-                        width: double.infinity,
-                        child: ElevatedButton.icon(
-                          onPressed: _isCalculating ? null : _calculate,
-                          icon: _isCalculating
-                              ? const SizedBox(
-                                  width: 20,
-                                  height: 20,
-                                  child: CircularProgressIndicator(strokeWidth: 2),
-                                )
-                              : const Icon(Icons.calculate),
-                          label: Text(_isCalculating ? 'Menghitung...' : 'Hitung Body Fat'),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.purple,
-                            foregroundColor: Colors.white,
-                            padding: const EdgeInsets.symmetric(vertical: 16),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              
-              if (_result != null) ...[
-                const SizedBox(height: 20),
-                Card(
-                  color: _result!.containsKey('error')
-                      ? Colors.red.withOpacity(0.1)
-                      : Colors.purple.withOpacity(0.1),
-                  child: Padding(
-                    padding: const EdgeInsets.all(20),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          _result!.containsKey('error') ? 'Error' : 'Hasil Perhitungan',
-                          style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                            fontWeight: FontWeight.bold,
-                            color: _result!.containsKey('error') ? Colors.red : null,
-                          ),
-                        ),
-                        const SizedBox(height: 20),
-                        if (_result!.containsKey('error'))
-                          Text(
-                            _result!['error'],
-                            style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                              color: Colors.red,
-                            ),
-                          )
-                        else ...[
-                          Center(
-                            child: Column(
-                              children: [
-                                Text(
-                                  'Body Fat',
-                                  style: Theme.of(context).textTheme.bodyLarge,
-                                ),
-                                const SizedBox(height: 8),
-                                Text(
-                                  '${_result!['body_fat_percentage']} ${_result!['unit']}',
-                                  style: Theme.of(context).textTheme.displayLarge?.copyWith(
-                                    color: Colors.purple,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                                const SizedBox(height: 8),
-                                Text(
-                                  _result!['category'] ?? '',
-                                  style: Theme.of(context).textTheme.bodyMedium,
-                                ),
-                              ],
-                            ),
-                          ),
-                          const SizedBox(height: 20),
-                          Container(
-                            padding: const EdgeInsets.all(16),
-                            decoration: BoxDecoration(
-                              color: Colors.white,
+                        const SizedBox(height: 16),
+                        TextFormField(
+                          controller: _heightController,
+                          keyboardType: TextInputType.number,
+                          decoration: InputDecoration(
+                            labelText: 'Tinggi Badan (cm)',
+                            prefixIcon: const Icon(Icons.height),
+                            border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(12),
                             ),
-                            child: Text(
-                              _result!['interpretation'] ?? '',
-                              style: Theme.of(context).textTheme.bodyMedium,
-                              textAlign: TextAlign.center,
-                            ),
+                            filled: true,
+                            fillColor: Colors.grey[50],
                           ),
-                          const SizedBox(height: 20),
-                          SizedBox(
-                            width: double.infinity,
-                            child: ElevatedButton.icon(
-                              onPressed: () async {
-                                final shouldSave = await showDialog<bool>(
-                                  context: context,
-                                  builder: (context) => AlertDialog(
-                                    title: const Text('Simpan Hasil?'),
-                                    content: const Text(
-                                      'Apakah Anda ingin menyimpan hasil perhitungan ini ke riwayat?',
-                                    ),
-                                    actions: [
-                                      TextButton(
-                                        onPressed: () => Navigator.pop(context, false),
-                                        child: const Text('Batal'),
-                                      ),
-                                      ElevatedButton(
-                                        onPressed: () => Navigator.pop(context, true),
-                                        child: const Text('Simpan'),
-                                      ),
-                                    ],
-                                  ),
-                                );
-                                
-                                if (shouldSave == true) {
-                                  await _saveResult();
-                                }
-                              },
-                              icon: const Icon(Icons.save),
-                              label: const Text('Simpan Hasil'),
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: AppTheme.primaryGreen,
-                                foregroundColor: Colors.white,
-                                padding: const EdgeInsets.symmetric(vertical: 16),
-                              ),
+                          validator: (value) {
+                            if (value == null || value.isEmpty) return 'Masukkan tinggi badan';
+                            final height = double.tryParse(value);
+                            if (height == null || height <= 0) return 'Tinggi badan harus lebih dari 0';
+                            return null;
+                          },
+                        ),
+                        const SizedBox(height: 16),
+                        TextFormField(
+                          controller: _ageController,
+                          keyboardType: TextInputType.number,
+                          decoration: InputDecoration(
+                            labelText: 'Usia (tahun)',
+                            prefixIcon: const Icon(Icons.calendar_today),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
                             ),
+                            filled: true,
+                            fillColor: Colors.grey[50],
+                          ),
+                          validator: (value) {
+                            if (value == null || value.isEmpty) return 'Masukkan usia';
+                            final age = int.tryParse(value);
+                            if (age == null || age <= 0 || age > 120) return 'Usia harus antara 1-120 tahun';
+                            return null;
+                          },
+                        ),
+                        const SizedBox(height: 16),
+                        TextFormField(
+                          controller: _waistController,
+                          keyboardType: TextInputType.number,
+                          decoration: InputDecoration(
+                            labelText: 'Lingkar Pinggang (cm)',
+                            prefixIcon: const Icon(Icons.straighten),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            filled: true,
+                            fillColor: Colors.grey[50],
+                          ),
+                          validator: (value) {
+                            if (value == null || value.isEmpty) return 'Masukkan lingkar pinggang';
+                            final waist = double.tryParse(value);
+                            if (waist == null || waist <= 0) return 'Lingkar pinggang harus lebih dari 0';
+                            return null;
+                          },
+                        ),
+                        const SizedBox(height: 16),
+                        TextFormField(
+                          controller: _neckController,
+                          keyboardType: TextInputType.number,
+                          decoration: InputDecoration(
+                            labelText: 'Lingkar Leher (cm)',
+                            prefixIcon: const Icon(Icons.straighten),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            filled: true,
+                            fillColor: Colors.grey[50],
+                          ),
+                          validator: (value) {
+                            if (value == null || value.isEmpty) return 'Masukkan lingkar leher';
+                            final neck = double.tryParse(value);
+                            if (neck == null || neck <= 0) return 'Lingkar leher harus lebih dari 0';
+                            return null;
+                          },
+                        ),
+                        if (_gender == 'female') ...[
+                          const SizedBox(height: 16),
+                          TextFormField(
+                            controller: _hipController,
+                            keyboardType: TextInputType.number,
+                            decoration: InputDecoration(
+                              labelText: 'Lingkar Pinggul (cm) *',
+                              prefixIcon: const Icon(Icons.straighten),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              filled: true,
+                              fillColor: Colors.grey[50],
+                              helperText: 'Wajib untuk perempuan',
+                            ),
+                            validator: (value) {
+                              if (value == null || value.isEmpty) return 'Masukkan lingkar pinggul';
+                              final hip = double.tryParse(value);
+                              if (hip == null || hip <= 0) return 'Lingkar pinggul harus lebih dari 0';
+                              return null;
+                            },
                           ),
                         ],
+                        const SizedBox(height: 24),
+                        SizedBox(
+                          width: double.infinity,
+                          child: ElevatedButton.icon(
+                            onPressed: _isCalculating ? null : _calculate,
+                            icon: _isCalculating
+                                ? const SizedBox(
+                                    width: 20,
+                                    height: 20,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                                    ),
+                                  )
+                                : const Icon(Icons.calculate),
+                            label: Text(_isCalculating ? 'Menghitung...' : 'Hitung Body Fat'),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: bodyFatColor,
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(vertical: 18),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              elevation: 3,
+                            ),
+                          ),
+                        ),
                       ],
                     ),
-                  ),
+                    if (_result != null) ...[
+                      const SizedBox(height: 20),
+                      CalculatorBaseWidget.buildResultCard(
+                        context: context,
+                        title: _result!.containsKey('error') ? 'Error' : 'Hasil Perhitungan',
+                        color: _result!.containsKey('error') ? Colors.red : bodyFatColor,
+                        content: _result!.containsKey('error')
+                            ? Text(
+                                _result!['error'],
+                                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                                  color: Colors.red,
+                                ),
+                              )
+                            : Column(
+                                children: [
+                                  Text(
+                                    'Body Fat',
+                                    style: Theme.of(context).textTheme.bodyLarge,
+                                  ),
+                                  const SizedBox(height: 8),
+                                  Text(
+                                    '${_result!['body_fat_percentage']} ${_result!['unit']}',
+                                    style: Theme.of(context).textTheme.displayLarge?.copyWith(
+                                      color: bodyFatColor,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 8),
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                                    decoration: BoxDecoration(
+                                      color: bodyFatColor.withOpacity(0.2),
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                    child: Text(
+                                      _result!['category'] ?? '',
+                                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                        color: bodyFatColor,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 20),
+                                  Container(
+                                    padding: const EdgeInsets.all(16),
+                                    decoration: BoxDecoration(
+                                      color: Colors.white,
+                                      borderRadius: BorderRadius.circular(12),
+                                      border: Border.all(
+                                        color: Colors.grey[200]!,
+                                        width: 1,
+                                      ),
+                                    ),
+                                    child: Text(
+                                      _result!['interpretation'] ?? '',
+                                      style: Theme.of(context).textTheme.bodyMedium,
+                                      textAlign: TextAlign.center,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                        actions: _result!.containsKey('error')
+                            ? []
+                            : [
+                                CalculatorBaseWidget.buildAIExplanationButton(
+                                  context: context,
+                                  calculationType: 'BodyFat',
+                                  result: _result!,
+                                  color: bodyFatColor,
+                                ),
+                                const SizedBox(height: 12),
+                                SizedBox(
+                                  width: double.infinity,
+                                  child: ElevatedButton.icon(
+                                    onPressed: () async {
+                                      final shouldSave = await showDialog<bool>(
+                                        context: context,
+                                        builder: (context) => AlertDialog(
+                                          title: const Text('Simpan Hasil?'),
+                                          content: const Text(
+                                            'Apakah Anda ingin menyimpan hasil perhitungan ini ke riwayat?',
+                                          ),
+                                          actions: [
+                                            TextButton(
+                                              onPressed: () => Navigator.pop(context, false),
+                                              child: const Text('Batal'),
+                                            ),
+                                            ElevatedButton(
+                                              onPressed: () => Navigator.pop(context, true),
+                                              child: const Text('Simpan'),
+                                            ),
+                                          ],
+                                        ),
+                                      );
+                                      
+                                      if (shouldSave == true) {
+                                        await _saveResult();
+                                      }
+                                    },
+                                    icon: const Icon(Icons.save),
+                                    label: const Text('Simpan Hasil'),
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: AppTheme.primaryGreen,
+                                      foregroundColor: Colors.white,
+                                      padding: const EdgeInsets.symmetric(vertical: 16),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                      ),
+                      if (!_result!.containsKey('error')) ...[
+                        const SizedBox(height: 20),
+                        CalculatorBaseWidget.buildRelatedCalculators(
+                          context: context,
+                          calculators: [
+                            RelatedCalculator(
+                              title: 'BMI',
+                              icon: Icons.monitor_weight,
+                              color: AppTheme.buttonGreen,
+                              route: '/calculator/bmi',
+                            ),
+                            RelatedCalculator(
+                              title: 'Body Water',
+                              icon: Icons.water_drop,
+                              color: Colors.lightBlue,
+                              route: '/calculator/body-water',
+                            ),
+                            RelatedCalculator(
+                              title: 'Waist to Hip',
+                              icon: Icons.straighten,
+                              color: Colors.teal,
+                              route: '/calculator/waist-to-hip',
+                            ),
+                          ],
+                        ),
+                      ],
+                    ],
+                  ],
                 ),
-              ],
-            ],
+              ),
+            ),
           ),
-        ),
+        ],
       ),
     );
   }

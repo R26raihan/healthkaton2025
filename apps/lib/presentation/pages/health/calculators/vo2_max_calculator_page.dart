@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:apps/core/services/health_calculator_service.dart';
 import 'package:apps/core/theme/app_theme.dart';
 import 'package:apps/presentation/providers/health_calculator_provider.dart';
+import 'package:apps/presentation/widgets/calculator_base_widget.dart';
 
 /// VO2 Max Calculator Page
 class VO2MaxCalculatorPage extends StatefulWidget {
@@ -87,214 +88,258 @@ class _VO2MaxCalculatorPageState extends State<VO2MaxCalculatorPage> {
   
   @override
   Widget build(BuildContext context) {
+    final vo2MaxColor = Colors.cyan;
+    
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Kalkulator VO₂ Max'),
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(20),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Card(
-                child: Padding(
-                  padding: const EdgeInsets.all(20),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Masukkan Data',
-                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      const SizedBox(height: 20),
-                      TextFormField(
-                        controller: _ageController,
-                        keyboardType: TextInputType.number,
-                        decoration: const InputDecoration(
-                          labelText: 'Usia (tahun)',
-                          hintText: 'Contoh: 25',
-                          prefixIcon: Icon(Icons.calendar_today),
-                          border: OutlineInputBorder(),
-                        ),
-                        validator: (value) {
-                          if (value == null || value.isEmpty) return 'Masukkan usia';
-                          final age = int.tryParse(value);
-                          if (age == null || age <= 0 || age > 120) return 'Usia harus antara 1-120 tahun';
-                          return null;
-                        },
-                      ),
-                      const SizedBox(height: 16),
-                      TextFormField(
-                        controller: _restingHrController,
-                        keyboardType: TextInputType.number,
-                        decoration: const InputDecoration(
-                          labelText: 'Resting Heart Rate (bpm)',
-                          hintText: 'Contoh: 60',
-                          prefixIcon: Icon(Icons.favorite),
-                          border: OutlineInputBorder(),
-                        ),
-                        validator: (value) {
-                          if (value == null || value.isEmpty) return 'Masukkan resting heart rate';
-                          final hr = double.tryParse(value);
-                          if (hr == null || hr <= 0) return 'Heart rate harus lebih dari 0';
-                          return null;
-                        },
-                      ),
-                      const SizedBox(height: 16),
-                      TextFormField(
-                        controller: _maxHrController,
-                        keyboardType: TextInputType.number,
-                        decoration: const InputDecoration(
-                          labelText: 'Max Heart Rate (bpm)',
-                          hintText: 'Contoh: 195',
-                          prefixIcon: Icon(Icons.favorite),
-                          border: OutlineInputBorder(),
-                          helperText: 'Gunakan kalkulator Max Heart Rate untuk mendapatkan nilai',
-                        ),
-                        validator: (value) {
-                          if (value == null || value.isEmpty) return 'Masukkan max heart rate';
-                          final hr = double.tryParse(value);
-                          if (hr == null || hr <= 0) return 'Heart rate harus lebih dari 0';
-                          return null;
-                        },
-                      ),
-                      const SizedBox(height: 24),
-                      SizedBox(
-                        width: double.infinity,
-                        child: ElevatedButton.icon(
-                          onPressed: _isCalculating ? null : _calculate,
-                          icon: _isCalculating
-                              ? const SizedBox(
-                                  width: 20,
-                                  height: 20,
-                                  child: CircularProgressIndicator(strokeWidth: 2),
-                                )
-                              : const Icon(Icons.calculate),
-                          label: Text(_isCalculating ? 'Menghitung...' : 'Hitung VO₂ Max'),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.blue,
-                            foregroundColor: Colors.white,
-                            padding: const EdgeInsets.symmetric(vertical: 16),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
+      body: CustomScrollView(
+        slivers: [
+          SliverAppBar(
+            expandedHeight: 180,
+            pinned: true,
+            flexibleSpace: FlexibleSpaceBar(
+              background: CalculatorBaseWidget.buildHeader(
+                context: context,
+                title: 'Kalkulator VO₂ Max',
+                subtitle: 'Konsumsi Oksigen Maksimal',
+                color: vo2MaxColor,
+                icon: Icons.air,
               ),
-              
-              if (_result != null) ...[
-                const SizedBox(height: 20),
-                Card(
-                  color: Colors.blue.withOpacity(0.1),
-                  child: Padding(
-                    padding: const EdgeInsets.all(20),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+            ),
+          ),
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.all(20),
+              child: Form(
+                key: _formKey,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    CalculatorBaseWidget.buildInputCard(
+                      context: context,
+                      title: 'Masukkan Data',
+                      color: vo2MaxColor,
                       children: [
-                        Text(
-                          'Hasil Perhitungan',
-                          style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                            fontWeight: FontWeight.bold,
+                        TextFormField(
+                          controller: _ageController,
+                          keyboardType: TextInputType.number,
+                          decoration: InputDecoration(
+                            labelText: 'Usia (tahun)',
+                            hintText: 'Contoh: 25',
+                            prefixIcon: const Icon(Icons.calendar_today),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            filled: true,
+                            fillColor: Colors.grey[50],
                           ),
+                          validator: (value) {
+                            if (value == null || value.isEmpty) return 'Masukkan usia';
+                            final age = int.tryParse(value);
+                            if (age == null || age <= 0 || age > 120) return 'Usia harus antara 1-120 tahun';
+                            return null;
+                          },
                         ),
-                        const SizedBox(height: 20),
-                        Center(
-                          child: Column(
-                            children: [
-                              Text(
-                                'VO₂ Max',
-                                style: Theme.of(context).textTheme.bodyLarge,
-                              ),
-                              const SizedBox(height: 8),
-                              Text(
-                                '${_result!['vo2_max']} ${_result!['unit']}',
-                                style: Theme.of(context).textTheme.displayLarge?.copyWith(
-                                  color: Colors.blue,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                              const SizedBox(height: 8),
-                              Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                                decoration: BoxDecoration(
-                                  color: _getCategoryColor(_result!['category']),
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                child: Text(
-                                  _result!['category'] ?? '',
-                                  style: const TextStyle(
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ),
-                            ],
+                        const SizedBox(height: 16),
+                        TextFormField(
+                          controller: _restingHrController,
+                          keyboardType: TextInputType.number,
+                          decoration: InputDecoration(
+                            labelText: 'Resting Heart Rate (bpm)',
+                            hintText: 'Contoh: 60',
+                            prefixIcon: const Icon(Icons.favorite),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            filled: true,
+                            fillColor: Colors.grey[50],
                           ),
+                          validator: (value) {
+                            if (value == null || value.isEmpty) return 'Masukkan resting heart rate';
+                            final hr = double.tryParse(value);
+                            if (hr == null || hr <= 0) return 'Heart rate harus lebih dari 0';
+                            return null;
+                          },
                         ),
-                        const SizedBox(height: 20),
-                        Container(
-                          padding: const EdgeInsets.all(16),
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(12),
+                        const SizedBox(height: 16),
+                        TextFormField(
+                          controller: _maxHrController,
+                          keyboardType: TextInputType.number,
+                          decoration: InputDecoration(
+                            labelText: 'Max Heart Rate (bpm)',
+                            hintText: 'Contoh: 195',
+                            prefixIcon: const Icon(Icons.favorite),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            filled: true,
+                            fillColor: Colors.grey[50],
+                            helperText: 'Gunakan kalkulator Max Heart Rate untuk mendapatkan nilai',
                           ),
-                          child: Text(
-                            _result!['interpretation'] ?? '',
-                            style: Theme.of(context).textTheme.bodyMedium,
-                            textAlign: TextAlign.center,
-                          ),
+                          validator: (value) {
+                            if (value == null || value.isEmpty) return 'Masukkan max heart rate';
+                            final hr = double.tryParse(value);
+                            if (hr == null || hr <= 0) return 'Heart rate harus lebih dari 0';
+                            return null;
+                          },
                         ),
-                        const SizedBox(height: 20),
+                        const SizedBox(height: 24),
                         SizedBox(
                           width: double.infinity,
                           child: ElevatedButton.icon(
-                            onPressed: () async {
-                              final shouldSave = await showDialog<bool>(
-                                context: context,
-                                builder: (context) => AlertDialog(
-                                  title: const Text('Simpan Hasil?'),
-                                  content: const Text(
-                                    'Apakah Anda ingin menyimpan hasil perhitungan ini ke riwayat?',
-                                  ),
-                                  actions: [
-                                    TextButton(
-                                      onPressed: () => Navigator.pop(context, false),
-                                      child: const Text('Batal'),
+                            onPressed: _isCalculating ? null : _calculate,
+                            icon: _isCalculating
+                                ? const SizedBox(
+                                    width: 20,
+                                    height: 20,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
                                     ),
-                                    ElevatedButton(
-                                      onPressed: () => Navigator.pop(context, true),
-                                      child: const Text('Simpan'),
-                                    ),
-                                  ],
-                                ),
-                              );
-                              
-                              if (shouldSave == true) {
-                                await _saveResult();
-                              }
-                            },
-                            icon: const Icon(Icons.save),
-                            label: const Text('Simpan Hasil'),
+                                  )
+                                : const Icon(Icons.calculate),
+                            label: Text(_isCalculating ? 'Menghitung...' : 'Hitung VO₂ Max'),
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: AppTheme.primaryGreen,
+                              backgroundColor: vo2MaxColor,
                               foregroundColor: Colors.white,
-                              padding: const EdgeInsets.symmetric(vertical: 16),
+                              padding: const EdgeInsets.symmetric(vertical: 18),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              elevation: 3,
                             ),
                           ),
                         ),
                       ],
                     ),
-                  ),
+                    if (_result != null) ...[
+                      const SizedBox(height: 20),
+                      CalculatorBaseWidget.buildResultCard(
+                        context: context,
+                        title: 'Hasil Perhitungan',
+                        color: vo2MaxColor,
+                        content: Column(
+                          children: [
+                            Text(
+                              'VO₂ Max',
+                              style: Theme.of(context).textTheme.bodyLarge,
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              '${_result!['vo2_max']} ${_result!['unit']}',
+                              style: Theme.of(context).textTheme.displayLarge?.copyWith(
+                                color: vo2MaxColor,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                              decoration: BoxDecoration(
+                                color: _getCategoryColor(_result!['category']),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: Text(
+                                _result!['category'] ?? '',
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 20),
+                            Container(
+                              padding: const EdgeInsets.all(16),
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(
+                                  color: Colors.grey[200]!,
+                                  width: 1,
+                                ),
+                              ),
+                              child: Text(
+                                _result!['interpretation'] ?? '',
+                                style: Theme.of(context).textTheme.bodyMedium,
+                                textAlign: TextAlign.center,
+                              ),
+                            ),
+                          ],
+                        ),
+                        actions: [
+                          CalculatorBaseWidget.buildAIExplanationButton(
+                            context: context,
+                            calculationType: 'VO2Max',
+                            result: _result!,
+                            color: vo2MaxColor,
+                          ),
+                          const SizedBox(height: 12),
+                          SizedBox(
+                            width: double.infinity,
+                            child: ElevatedButton.icon(
+                              onPressed: () async {
+                                final shouldSave = await showDialog<bool>(
+                                  context: context,
+                                  builder: (context) => AlertDialog(
+                                    title: const Text('Simpan Hasil?'),
+                                    content: const Text(
+                                      'Apakah Anda ingin menyimpan hasil perhitungan ini ke riwayat?',
+                                    ),
+                                    actions: [
+                                      TextButton(
+                                        onPressed: () => Navigator.pop(context, false),
+                                        child: const Text('Batal'),
+                                      ),
+                                      ElevatedButton(
+                                        onPressed: () => Navigator.pop(context, true),
+                                        child: const Text('Simpan'),
+                                      ),
+                                    ],
+                                  ),
+                                );
+                                
+                                if (shouldSave == true) {
+                                  await _saveResult();
+                                }
+                              },
+                              icon: const Icon(Icons.save),
+                              label: const Text('Simpan Hasil'),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: AppTheme.primaryGreen,
+                                foregroundColor: Colors.white,
+                                padding: const EdgeInsets.symmetric(vertical: 16),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 20),
+                      CalculatorBaseWidget.buildRelatedCalculators(
+                        context: context,
+                        calculators: [
+                          RelatedCalculator(
+                            title: 'Max Heart Rate',
+                            icon: Icons.favorite,
+                            color: Colors.red,
+                            route: '/calculator/max-heart-rate',
+                          ),
+                          RelatedCalculator(
+                            title: 'Target Heart Rate',
+                            icon: Icons.favorite,
+                            color: Colors.pink,
+                            route: '/calculator/target-heart-rate',
+                          ),
+                        ],
+                      ),
+                    ],
+                  ],
                 ),
-              ],
-            ],
+              ),
+            ),
           ),
-        ),
+        ],
       ),
     );
   }

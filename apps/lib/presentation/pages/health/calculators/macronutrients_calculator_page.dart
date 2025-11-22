@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:apps/core/services/health_calculator_service.dart';
 import 'package:apps/core/theme/app_theme.dart';
 import 'package:apps/presentation/providers/health_calculator_provider.dart';
+import 'package:apps/presentation/widgets/calculator_base_widget.dart';
 
 /// Macronutrients Calculator Page
 class MacronutrientsCalculatorPage extends StatefulWidget {
@@ -96,217 +97,271 @@ class _MacronutrientsCalculatorPageState extends State<MacronutrientsCalculatorP
   
   @override
   Widget build(BuildContext context) {
+    final macroColor = Colors.green;
+    
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Kalkulator Macronutrients'),
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(20),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Card(
-                child: Padding(
-                  padding: const EdgeInsets.all(20),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Masukkan Data',
-                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      const SizedBox(height: 20),
-                      TextFormField(
-                        controller: _caloriesController,
-                        keyboardType: TextInputType.number,
-                        decoration: const InputDecoration(
-                          labelText: 'Total Kalori (kcal)',
-                          hintText: 'Contoh: 2000',
-                          prefixIcon: Icon(Icons.local_fire_department),
-                          border: OutlineInputBorder(),
-                        ),
-                        validator: (value) {
-                          if (value == null || value.isEmpty) return 'Masukkan total kalori';
-                          final calories = double.tryParse(value);
-                          if (calories == null || calories <= 0) return 'Kalori harus lebih dari 0';
-                          return null;
-                        },
-                      ),
-                      const SizedBox(height: 16),
-                      TextFormField(
-                        controller: _proteinController,
-                        keyboardType: TextInputType.number,
-                        decoration: const InputDecoration(
-                          labelText: 'Protein (%)',
-                          hintText: '30',
-                          prefixIcon: Icon(Icons.restaurant),
-                          border: OutlineInputBorder(),
-                        ),
-                        validator: (value) {
-                          if (value == null || value.isEmpty) return 'Masukkan persentase protein';
-                          final protein = double.tryParse(value);
-                          if (protein == null || protein < 0 || protein > 100) return 'Protein harus 0-100%';
-                          return null;
-                        },
-                      ),
-                      const SizedBox(height: 16),
-                      TextFormField(
-                        controller: _carbController,
-                        keyboardType: TextInputType.number,
-                        decoration: const InputDecoration(
-                          labelText: 'Karbohidrat (%)',
-                          hintText: '40',
-                          prefixIcon: Icon(Icons.restaurant),
-                          border: OutlineInputBorder(),
-                        ),
-                        validator: (value) {
-                          if (value == null || value.isEmpty) return 'Masukkan persentase karbohidrat';
-                          final carb = double.tryParse(value);
-                          if (carb == null || carb < 0 || carb > 100) return 'Karbohidrat harus 0-100%';
-                          return null;
-                        },
-                      ),
-                      const SizedBox(height: 16),
-                      TextFormField(
-                        controller: _fatController,
-                        keyboardType: TextInputType.number,
-                        decoration: const InputDecoration(
-                          labelText: 'Lemak (%)',
-                          hintText: '30',
-                          prefixIcon: Icon(Icons.restaurant),
-                          border: OutlineInputBorder(),
-                        ),
-                        validator: (value) {
-                          if (value == null || value.isEmpty) return 'Masukkan persentase lemak';
-                          final fat = double.tryParse(value);
-                          if (fat == null || fat < 0 || fat > 100) return 'Lemak harus 0-100%';
-                          return null;
-                        },
-                      ),
-                      const SizedBox(height: 24),
-                      SizedBox(
-                        width: double.infinity,
-                        child: ElevatedButton.icon(
-                          onPressed: _isCalculating ? null : _calculate,
-                          icon: _isCalculating
-                              ? const SizedBox(
-                                  width: 20,
-                                  height: 20,
-                                  child: CircularProgressIndicator(strokeWidth: 2),
-                                )
-                              : const Icon(Icons.calculate),
-                          label: Text(_isCalculating ? 'Menghitung...' : 'Hitung Macronutrients'),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.green,
-                            foregroundColor: Colors.white,
-                            padding: const EdgeInsets.symmetric(vertical: 16),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
+      body: CustomScrollView(
+        slivers: [
+          SliverAppBar(
+            expandedHeight: 180,
+            pinned: true,
+            flexibleSpace: FlexibleSpaceBar(
+              background: CalculatorBaseWidget.buildHeader(
+                context: context,
+                title: 'Kalkulator Macronutrients',
+                subtitle: 'Protein, Karbohidrat & Lemak',
+                color: macroColor,
+                icon: Icons.restaurant,
               ),
-              
-              if (_result != null) ...[
-                const SizedBox(height: 20),
-                Card(
-                  color: Colors.green.withOpacity(0.1),
-                  child: Padding(
-                    padding: const EdgeInsets.all(20),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+            ),
+          ),
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.all(20),
+              child: Form(
+                key: _formKey,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    CalculatorBaseWidget.buildInputCard(
+                      context: context,
+                      title: 'Masukkan Data',
+                      color: macroColor,
                       children: [
-                        Text(
-                          'Hasil Perhitungan',
-                          style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                            fontWeight: FontWeight.bold,
+                        TextFormField(
+                          controller: _caloriesController,
+                          keyboardType: TextInputType.number,
+                          decoration: InputDecoration(
+                            labelText: 'Total Kalori (kcal)',
+                            hintText: 'Contoh: 2000',
+                            prefixIcon: const Icon(Icons.local_fire_department),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            filled: true,
+                            fillColor: Colors.grey[50],
                           ),
+                          validator: (value) {
+                            if (value == null || value.isEmpty) return 'Masukkan total kalori';
+                            final calories = double.tryParse(value);
+                            if (calories == null || calories <= 0) return 'Kalori harus lebih dari 0';
+                            return null;
+                          },
                         ),
-                        const SizedBox(height: 20),
-                        _buildMacroCard(
-                          context,
-                          'Protein',
-                          _result!['protein'] as Map<String, dynamic>,
-                          Colors.blue,
-                        ),
-                        const SizedBox(height: 12),
-                        _buildMacroCard(
-                          context,
-                          'Karbohidrat',
-                          _result!['carbohydrates'] as Map<String, dynamic>,
-                          Colors.orange,
-                        ),
-                        const SizedBox(height: 12),
-                        _buildMacroCard(
-                          context,
-                          'Lemak',
-                          _result!['fat'] as Map<String, dynamic>,
-                          Colors.red,
-                        ),
-                        const SizedBox(height: 20),
-                        Container(
-                          padding: const EdgeInsets.all(16),
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(12),
+                        const SizedBox(height: 16),
+                        TextFormField(
+                          controller: _proteinController,
+                          keyboardType: TextInputType.number,
+                          decoration: InputDecoration(
+                            labelText: 'Protein (%)',
+                            hintText: '30',
+                            prefixIcon: const Icon(Icons.restaurant),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            filled: true,
+                            fillColor: Colors.grey[50],
                           ),
-                          child: Text(
-                            _result!['interpretation'] ?? '',
-                            style: Theme.of(context).textTheme.bodyMedium,
-                            textAlign: TextAlign.center,
-                          ),
+                          validator: (value) {
+                            if (value == null || value.isEmpty) return 'Masukkan persentase protein';
+                            final protein = double.tryParse(value);
+                            if (protein == null || protein < 0 || protein > 100) return 'Protein harus 0-100%';
+                            return null;
+                          },
                         ),
-                        const SizedBox(height: 20),
+                        const SizedBox(height: 16),
+                        TextFormField(
+                          controller: _carbController,
+                          keyboardType: TextInputType.number,
+                          decoration: InputDecoration(
+                            labelText: 'Karbohidrat (%)',
+                            hintText: '40',
+                            prefixIcon: const Icon(Icons.restaurant),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            filled: true,
+                            fillColor: Colors.grey[50],
+                          ),
+                          validator: (value) {
+                            if (value == null || value.isEmpty) return 'Masukkan persentase karbohidrat';
+                            final carb = double.tryParse(value);
+                            if (carb == null || carb < 0 || carb > 100) return 'Karbohidrat harus 0-100%';
+                            return null;
+                          },
+                        ),
+                        const SizedBox(height: 16),
+                        TextFormField(
+                          controller: _fatController,
+                          keyboardType: TextInputType.number,
+                          decoration: InputDecoration(
+                            labelText: 'Lemak (%)',
+                            hintText: '30',
+                            prefixIcon: const Icon(Icons.restaurant),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            filled: true,
+                            fillColor: Colors.grey[50],
+                          ),
+                          validator: (value) {
+                            if (value == null || value.isEmpty) return 'Masukkan persentase lemak';
+                            final fat = double.tryParse(value);
+                            if (fat == null || fat < 0 || fat > 100) return 'Lemak harus 0-100%';
+                            return null;
+                          },
+                        ),
+                        const SizedBox(height: 24),
                         SizedBox(
                           width: double.infinity,
                           child: ElevatedButton.icon(
-                            onPressed: () async {
-                              final shouldSave = await showDialog<bool>(
-                                context: context,
-                                builder: (context) => AlertDialog(
-                                  title: const Text('Simpan Hasil?'),
-                                  content: const Text(
-                                    'Apakah Anda ingin menyimpan hasil perhitungan ini ke riwayat?',
-                                  ),
-                                  actions: [
-                                    TextButton(
-                                      onPressed: () => Navigator.pop(context, false),
-                                      child: const Text('Batal'),
+                            onPressed: _isCalculating ? null : _calculate,
+                            icon: _isCalculating
+                                ? const SizedBox(
+                                    width: 20,
+                                    height: 20,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
                                     ),
-                                    ElevatedButton(
-                                      onPressed: () => Navigator.pop(context, true),
-                                      child: const Text('Simpan'),
-                                    ),
-                                  ],
-                                ),
-                              );
-                              
-                              if (shouldSave == true) {
-                                await _saveResult();
-                              }
-                            },
-                            icon: const Icon(Icons.save),
-                            label: const Text('Simpan Hasil'),
+                                  )
+                                : const Icon(Icons.calculate),
+                            label: Text(_isCalculating ? 'Menghitung...' : 'Hitung Macronutrients'),
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: AppTheme.primaryGreen,
+                              backgroundColor: macroColor,
                               foregroundColor: Colors.white,
-                              padding: const EdgeInsets.symmetric(vertical: 16),
+                              padding: const EdgeInsets.symmetric(vertical: 18),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              elevation: 3,
                             ),
                           ),
                         ),
                       ],
                     ),
-                  ),
+                    if (_result != null) ...[
+                      const SizedBox(height: 20),
+                      CalculatorBaseWidget.buildResultCard(
+                        context: context,
+                        title: 'Hasil Perhitungan',
+                        color: macroColor,
+                        content: Column(
+                          children: [
+                            _buildMacroCard(
+                              context,
+                              'Protein',
+                              _result!['protein'] as Map<String, dynamic>,
+                              Colors.blue,
+                            ),
+                            const SizedBox(height: 12),
+                            _buildMacroCard(
+                              context,
+                              'Karbohidrat',
+                              _result!['carbohydrates'] as Map<String, dynamic>,
+                              Colors.orange,
+                            ),
+                            const SizedBox(height: 12),
+                            _buildMacroCard(
+                              context,
+                              'Lemak',
+                              _result!['fat'] as Map<String, dynamic>,
+                              Colors.red,
+                            ),
+                            const SizedBox(height: 20),
+                            Container(
+                              padding: const EdgeInsets.all(16),
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(
+                                  color: Colors.grey[200]!,
+                                  width: 1,
+                                ),
+                              ),
+                              child: Text(
+                                _result!['interpretation'] ?? '',
+                                style: Theme.of(context).textTheme.bodyMedium,
+                                textAlign: TextAlign.center,
+                              ),
+                            ),
+                          ],
+                        ),
+                        actions: [
+                          CalculatorBaseWidget.buildAIExplanationButton(
+                            context: context,
+                            calculationType: 'Macronutrients',
+                            result: _result!,
+                            color: macroColor,
+                          ),
+                          const SizedBox(height: 12),
+                          SizedBox(
+                            width: double.infinity,
+                            child: ElevatedButton.icon(
+                              onPressed: () async {
+                                final shouldSave = await showDialog<bool>(
+                                  context: context,
+                                  builder: (context) => AlertDialog(
+                                    title: const Text('Simpan Hasil?'),
+                                    content: const Text(
+                                      'Apakah Anda ingin menyimpan hasil perhitungan ini ke riwayat?',
+                                    ),
+                                    actions: [
+                                      TextButton(
+                                        onPressed: () => Navigator.pop(context, false),
+                                        child: const Text('Batal'),
+                                      ),
+                                      ElevatedButton(
+                                        onPressed: () => Navigator.pop(context, true),
+                                        child: const Text('Simpan'),
+                                      ),
+                                    ],
+                                  ),
+                                );
+                                
+                                if (shouldSave == true) {
+                                  await _saveResult();
+                                }
+                              },
+                              icon: const Icon(Icons.save),
+                              label: const Text('Simpan Hasil'),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: AppTheme.primaryGreen,
+                                foregroundColor: Colors.white,
+                                padding: const EdgeInsets.symmetric(vertical: 16),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 20),
+                      CalculatorBaseWidget.buildRelatedCalculators(
+                        context: context,
+                        calculators: [
+                          RelatedCalculator(
+                            title: 'Daily Calories',
+                            icon: Icons.local_fire_department,
+                            color: Colors.brown,
+                            route: '/calculator/daily-calories',
+                          ),
+                          RelatedCalculator(
+                            title: 'TDEE',
+                            icon: Icons.fitness_center,
+                            color: Colors.orange,
+                            route: '/calculator/tdee',
+                          ),
+                        ],
+                      ),
+                    ],
+                  ],
                 ),
-              ],
-            ],
+              ),
+            ),
           ),
-        ),
+        ],
       ),
     );
   }

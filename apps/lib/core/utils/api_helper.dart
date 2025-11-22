@@ -6,7 +6,7 @@ import 'package:apps/core/constants/app_constants.dart';
 class ApiHelper {
   static String? _cachedLocalIp;
   static const int _defaultPort = 8000;
-  static const String? _hardcodedServerIp = '192.168.99.67';
+  static const String? _hardcodedServerIp = '192.168.1.4';
   static Future<String> getBaseUrl() async {
     try {
       // Jika ada hardcoded IP, gunakan langsung (untuk production server)
