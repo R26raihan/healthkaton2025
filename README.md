@@ -473,6 +473,10 @@ graph TB
     Flutter --> TTS
     Flutter --> FLChart
     
+    Flutter -->|HTTP Requests| FastAPI
+    Flutter -->|API Calls| Microservices
+    Dio -->|REST API| FastAPI
+    
     FastAPI --> Uvicorn
     FastAPI --> SQLAlchemy
     FastAPI --> Pydantic
@@ -498,6 +502,9 @@ graph TB
     DockerCompose --> Biznet
     Docker --> ContainerRegistry
     Biznet --> Orchestration
+    
+    Flutter -->|Deploy| Biznet
+    FastAPI -->|Containerize| Docker
     
     style Flutter fill:#02569B,stroke:#0175C2,color:#fff
     style FastAPI fill:#009688,stroke:#00796B,color:#fff
