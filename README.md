@@ -398,10 +398,16 @@ from auth.core.database import engine, Base, get_db
 graph TB
     subgraph Frontend["📱 Frontend"]
         Flutter["Flutter<br/>Mobile App"]
+        Provider["Provider<br/>State Management"]
+        Dio["Dio<br/>HTTP Client"]
+        SecureStorage["Flutter Secure Storage<br/>Security"]
     end
     
     subgraph Backend["⚙️ Backend"]
         FastAPI["FastAPI<br/>REST API"]
+        SQLAlchemy["SQLAlchemy<br/>ORM"]
+        PyJWT["PyJWT<br/>Authentication"]
+        Pydantic["Pydantic<br/>Validation"]
         Microservices["Microservices<br/>6 Services"]
     end
     
@@ -411,7 +417,9 @@ graph TB
     
     subgraph AI["🤖 AI/ML"]
         GeminiAPI["Google Gemini API<br/>Mobile RAG"]
+        GoogleGenAI["google-generativeai<br/>Library"]
         OpenRouter["OpenRouter API<br/>Admin RAG"]
+        OpenAI["OpenAI SDK<br/>Client"]
     end
     
     subgraph Deployment["🚀 Deployment"]
@@ -419,11 +427,23 @@ graph TB
         Biznet["Biznet Cloud"]
     end
     
-    Flutter -->|HTTP/REST API| FastAPI
+    Flutter --> Provider
+    Flutter --> Dio
+    Flutter --> SecureStorage
+    Dio -->|HTTP/REST API| FastAPI
+    
+    FastAPI --> SQLAlchemy
+    FastAPI --> PyJWT
+    FastAPI --> Pydantic
     FastAPI --> Microservices
+    
+    SQLAlchemy --> MySQL
     Microservices --> MySQL
+    
     Microservices --> GeminiAPI
     Microservices --> OpenRouter
+    GeminiAPI --> GoogleGenAI
+    OpenRouter --> OpenAI
     
     Microservices --> Docker
     Docker --> Biznet
@@ -436,6 +456,9 @@ graph TB
     style OpenRouter fill:#FF6B6B,stroke:#EE5A6F,color:#fff
     style Docker fill:#2496ED,stroke:#0db7ed,color:#fff
     style Biznet fill:#00A8E8,stroke:#0099CC,color:#fff
+    style Provider fill:#E91E63,stroke:#C2185B,color:#fff
+    style Dio fill:#FF5722,stroke:#E64A19,color:#fff
+    style PyJWT fill:#FF9800,stroke:#F57C00,color:#fff
 ```
 
 ### Framework & Libraries
